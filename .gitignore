@@ -1,0 +1,11 @@
+# Security: Exclude SSH keys and environment variables
+*.pem
+.env
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Node.js / Dependencies
+node_modules/
+npm-debug.log
