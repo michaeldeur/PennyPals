@@ -6,9 +6,17 @@ echo "================================================================"
 echo " Starting Penny Pals Environment"
 echo "================================================================"
 
-# Step 1: Check & Auto-Install Java 21 & Maven
-echo "=== [Step 1/4] Checking & Preparing Build Tools ==="
+# Step 1: Check required files and build tools
+echo "=== [Step 1/4] Checking Required Files & Build Tools ==="
 
+# Verify that pom.xml exists in the current directory
+if [ ! -f "pom.xml" ]; then
+    echo "ERROR: pom.xml is missing from the repository root."
+    echo "Please ensure you run ./start.sh from the root directory of the PennyPals project."
+    exit 1
+fi
+
+# Function to extract active major Java version
 get_java_version() {
     if command -v java >/dev/null 2>&1; then
         local VER_STR
@@ -24,22 +32,24 @@ get_java_version() {
     fi
 }
 
-# 1A. Ensure Java 21 is installed
+# Auto-install OpenJDK 21 if active Java version is less than 21
 JAVA_VER=$(get_java_version)
 if [ "$JAVA_VER" -lt 21 ]; then
-    echo "--> Java 21+ not detected (found version ${JAVA_VER}). Installing OpenJDK 21..."
+    echo "Active Java version is ${JAVA_VER} (Java 21+ required)."
     if command -v apt-get >/dev/null 2>&1; then
+        echo "Auto-installing OpenJDK 21 via apt-get..."
         SUDO_CMD=""
         [ "$EUID" -ne 0 ] && SUDO_CMD="sudo"
         $SUDO_CMD apt-get update -qq
         $SUDO_CMD apt-get install -y openjdk-21-jdk
     else
         echo "ERROR: Java 21 is required but could not be automatically installed."
+        echo "Please install OpenJDK 21 or higher and re-run ./start.sh."
         exit 1
     fi
 fi
 
-# 1B. Ensure Maven or Maven Wrapper is available
+# Select Maven wrapper or system Maven, auto-installing Maven if both are missing
 BUILD_CMD=""
 if [ -f "./mvnw" ]; then
     chmod +x ./mvnw
@@ -47,48 +57,55 @@ if [ -f "./mvnw" ]; then
 elif command -v mvn >/dev/null 2>&1; then
     BUILD_CMD="mvn"
 else
-    echo "--> Maven wrapper not found. Installing system Maven..."
+    echo "Maven wrapper not found. Auto-installing Maven..."
     if command -v apt-get >/dev/null 2>&1; then
         SUDO_CMD=""
         [ "$EUID" -ne 0 ] && SUDO_CMD="sudo"
+        $SUDO_CMD apt-get update -qq
         $SUDO_CMD apt-get install -y maven
         BUILD_CMD="mvn"
     else
         echo "ERROR: Neither ./mvnw nor system 'mvn' command is available."
+        echo "Please install Maven or include ./mvnw in the repository root."
         exit 1
     fi
 fi
 
-echo "Build tools verified."
+echo "All required build tools and pom.xml verified."
 echo ""
 
-# Step 2: Install Project Dependencies & Build JAR
+# Step 2: Build the application package
 echo "=== [Step 2/4] Compiling Application Dependencies ==="
 
-$BUILD_CMD clean package -DskipTests
+# Run quiet Maven build to prevent verbose stack traces on failure
+if ! $BUILD_CMD clean package -DskipTests -q; then
+    echo "ERROR: Failed to build Penny Pals application."
+    echo "Please verify your Java code and pom.xml configuration."
+    exit 1
+fi
 
-echo "Application built successfully."
+echo "Application compiled and packaged successfully."
 echo ""
 
-# =============================================================================
-# Step 3: Initialize Database & Data Directory
-# =============================================================================
-echo "=== [Step 3/4] Initializing Local Storage ==="
+# Step 3: Set up runtime data directories
+echo "=== [Step 3/4] Initializing Storage Directories ==="
 
+# Create local storage directory for database files
 mkdir -p ./data
 
-echo "Local storage directories initialized."
+echo "Local storage directory ready."
 echo ""
 
-# =============================================================================
-# Step 4: Launch Penny Pals Application
-# =============================================================================
-echo "=== [Step 4/4] Launching Penny Pals Application ==="
+# Step 4: Locate target JAR and launch application
+echo "=== [Step 4/4] Starting Penny Pals Application ==="
 
-JAR_FILE=$(find target -name "*.jar" ! -name "*-plain.jar" | head -n 1)
+# Locate compiled executable Spring Boot JAR file
+JAR_FILE=$(find target -name "*.jar" ! -name "*-plain.jar" | head -n 1 2>/dev/null || true)
 
-if [ -z "$JAR_FILE" ]; then
+# Ensure executable JAR file exists before starting
+if [ -z "$JAR_FILE" ] || [ ! -f "$JAR_FILE" ]; then
     echo "ERROR: Executable JAR file not found in target/ directory."
+    echo "Ensure pom.xml produces a spring-boot-maven-plugin executable JAR."
     exit 1
 fi
 
@@ -100,4 +117,5 @@ echo " Press Ctrl+C to stop the application."
 echo "================================================================"
 echo ""
 
+# Launch the compiled Spring Boot application
 exec java -jar "$JAR_FILE"
