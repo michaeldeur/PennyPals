@@ -1,11 +1,28 @@
-# Security: Exclude SSH keys and environment variables
+# Security & Secrets
 *.pem
 .env
 
-# OS-specific files
+# Java / Maven Build Artifacts
+target/
+*.jar
+*.war
+*.ear
+*.class
+
+# Database storage files
+/data/
+*.db
+*.sqlite
+
+# IDE Configuration (IntelliJ / Eclipse)
+.idea/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+
+# OS-Specific Files
 .DS_Store
 Thumbs.db
-
-# Node.js / Dependencies
-node_modules/
-npm-debug.log
