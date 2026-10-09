@@ -3,40 +3,67 @@
 set -e
 
 echo "================================================================"
-echo " Starting Penny Pals Local Environment"
+echo " Starting Penny Pals Environment"
 echo "================================================================"
 
 # =============================================================================
-# Step 1: Check Required Tools
+# Step 1: Check & Auto-Install Required Tools (Java 21)
 # =============================================================================
-echo "=== [Step 1/4] Checking Required Tools ==="
+echo "=== [Step 1/4] Checking & Preparing Java 21 Environment ==="
 
-if ! command -v java >/dev/null 2>&1; then
-    echo "ERROR: Java is not installed."
-    echo "Please install OpenJDK 21 or higher as listed in the README."
-    exit 1
+# Helper function to get major Java version
+get_java_version() {
+    if command -v java >/dev/null 2>&1; then
+        local VER_STR
+        VER_STR=$(java -version 2>&1 | head -n 1)
+        local MAJOR_VER
+        MAJOR_VER=$(echo "$VER_STR" | awk -F '"' '{print $2}' | cut -d'.' -f1)
+        if [ "$MAJOR_VER" -eq 1 ]; then
+            MAJOR_VER=$(echo "$VER_STR" | awk -F '"' '{print $2}' | cut -d'.' -f2)
+        fi
+        echo "$MAJOR_VER"
+    else
+        echo "0"
+    fi
+}
+
+JAVA_VER=$(get_java_version)
+
+# Install Java 21 if missing or lower version
+if [ "$JAVA_VER" -lt 21 ]; then
+    echo "--> Active Java version is ${JAVA_VER} (Java 21+ required)."
+
+    # Check if apt-get is available (Ubuntu / Debian)
+    if command -v apt-get >/dev/null 2>&1; then
+        echo "--> Attempting automatic installation of OpenJDK 21 via apt-get..."
+        if [ "$EUID" -ne 0 ]; then
+            SUDO_CMD="sudo"
+        else
+            SUDO_CMD=""
+        fi
+
+        $SUDO_CMD apt-get update -qq
+        $SUDO_CMD apt-get install -y openjdk-21-jdk
+    else
+        echo "ERROR: Java 21 is required, but could not be auto-installed."
+        echo "Please install OpenJDK 21 or higher for your OS and re-run ./start.sh."
+        exit 1
+    fi
 fi
 
-JAVA_VER_STRING=$(java -version 2>&1 | head -n 1)
-JAVA_MAJOR_VERSION=$(echo "$JAVA_VER_STRING" | awk -F '"' '{print $2}' | cut -d'.' -f1)
-
-if [ "$JAVA_MAJOR_VERSION" -eq 1 ]; then
-    JAVA_MAJOR_VERSION=$(echo "$JAVA_VER_STRING" | awk -F '"' '{print $2}' | cut -d'.' -f2)
-fi
-
-if [ -z "$JAVA_MAJOR_VERSION" ] || [ "$JAVA_MAJOR_VERSION" -lt 21 ]; then
-    echo "ERROR: Java 21 or higher is required to run Penny Pals."
-    echo "Found active Java version: ${JAVA_MAJOR_VERSION}"
-    echo "Please install or select OpenJDK 21 in your environment."
+# Re-check Java version after installation attempt
+FINAL_JAVA_VER=$(get_java_version)
+if [ "$FINAL_JAVA_VER" -lt 21 ]; then
+    echo "ERROR: Java 21 installation verified failed. Detected version: ${FINAL_JAVA_VER}."
     exit 1
 fi
 
 if [ ! -f "./mvnw" ]; then
-    echo "ERROR: Maven wrapper (./mvnw) is missing from project root."
+    echo "ERROR: Maven wrapper (./mvnw) is missing from the repository root."
     exit 1
 fi
 
-echo "✓ Java 21+ and Maven wrapper verified."
+echo "✓ OpenJDK 21 and Maven wrapper verified."
 echo ""
 
 # =============================================================================
@@ -74,7 +101,7 @@ fi
 
 echo ""
 echo "================================================================"
-echo " Penny Pals server is launching!"
+echo " Penny Pals server is starting up!"
 echo " Open your browser to: http://localhost:8080"
 echo " Press Ctrl+C to stop the application."
 echo "================================================================"
