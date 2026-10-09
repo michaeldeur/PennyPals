@@ -1,0 +1,15 @@
+[Unit]
+Description=Penny Pals Web Application
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/var/www/pennypals
+ExecStart=/usr/bin/java -jar /var/www/pennypals/app.jar
+Restart=always
+RestartSec=10
+Environment=PORT=8080
+
+[Install]
+WantedBy=multi-user.target
