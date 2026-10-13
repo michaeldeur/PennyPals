@@ -5,11 +5,10 @@ After=network.target
 [Service]
 Type=simple
 User=ubuntu
-WorkingDirectory=/var/www/pennypals
-ExecStart=/usr/bin/java -jar /var/www/pennypals/app.jar
+WorkingDirectory=/opt/pennypals
+ExecStart=/usr/bin/java -jar /opt/pennypals/target/pennypals-0.0.1-SNAPSHOT.jar
 Restart=always
 RestartSec=10
-Environment=PORT=8080
 
 [Install]
 WantedBy=multi-user.target

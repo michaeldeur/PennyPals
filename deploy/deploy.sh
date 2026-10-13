@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Exit immediately if any command fails
 set -e
 
 # Parse command line flags -h <PUBLIC-IP> -i <KEY-PATH>
@@ -16,10 +17,11 @@ if [ -z "$HOST" ] || [ -z "$KEY" ]; then
 fi
 
 echo "=== Building Production Executable Jar Locally ==="
-./mvnw clean package -DskipTests
+./mvnw clean package -DskipTests -q
 
-echo "=== Transferring App Jar to EC2 ($HOST) ==="
-scp -i "$KEY" target/pennypals-0.0.1-SNAPSHOT.jar ubuntu@$HOST:/var/www/pennypals/app.jar
+echo "=== Syncing Code to EC2 ($HOST) via rsync ==="
+ssh -i "$KEY" ubuntu@$HOST "mkdir -p /opt/pennypals/target"
+rsync -avz -e "ssh -i $KEY" target/pennypals-0.0.1-SNAPSHOT.jar ubuntu@$HOST:/opt/pennypals/target/
 
 echo "=== Restarting Remote Penny Pals Service ==="
 ssh -i "$KEY" ubuntu@$HOST "sudo systemctl restart pennypals.service"
