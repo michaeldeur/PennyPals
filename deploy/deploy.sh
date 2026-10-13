@@ -20,8 +20,8 @@ echo "=== Building Production Executable Jar Locally ==="
 ./mvnw clean package -DskipTests -q
 
 echo "=== Syncing Code to EC2 ($HOST) via rsync ==="
-ssh -i "$KEY" ubuntu@$HOST "mkdir -p /opt/pennypals/target"
-rsync -avz -e "ssh -i $KEY" target/pennypals-0.0.1-SNAPSHOT.jar ubuntu@$HOST:/opt/pennypals/target/
+ssh -i "$KEY" ubuntu@$HOST "mkdir -p /home/ubuntu/pennypals/target"
+rsync -avz -e "ssh -i $KEY" target/pennypals-0.0.1-SNAPSHOT.jar ubuntu@$HOST:/home/ubuntu/pennypals/target/
 
 echo "=== Restarting Remote Penny Pals Service ==="
 ssh -i "$KEY" ubuntu@$HOST "sudo systemctl restart pennypals.service"

@@ -13,8 +13,8 @@ echo "=== Step 2: Installing JDK 21, Nginx, rsync, & SQLite3 ==="
 apt-get install -y openjdk-21-jdk nginx rsync sqlite3
 
 echo "=== Step 3: Creating Application Directory & Data Storage ==="
-mkdir -p /opt/pennypals/data
-chown -R ubuntu:ubuntu /opt/pennypals
+mkdir -p /home/ubuntu/pennypals/data
+chown -R ubuntu:ubuntu /home/ubuntu/pennypals
 
 echo "=== Step 4: Writing & Enabling Nginx Reverse Proxy Configuration ==="
 cat << 'EOF' > /etc/nginx/conf.d/pennypals.conf
