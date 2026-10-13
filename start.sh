@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Start the Penny Pals web application on your local machine.
-# Automatically checks for Java 21 and installs it if missing.
+# Automatically checks for Java 21 and Maven, installing them if missing.
 #
 #   ./start.sh              start the app on http://localhost:8080
 #   ./start.sh --port 9000  listen somewhere other than port 8080
@@ -83,12 +83,23 @@ if [ "$JAVA_VERSION" -lt "$REQUIRED_JAVA_VERSION" ] 2>/dev/null; then
     die "Java version is too old ($JAVA_VERSION). Penny Pals requires Java ${REQUIRED_JAVA_VERSION} or newer."
 fi
 
+if ! command -v mvn >/dev/null 2>&1; then
+    say "Maven is not installed. Attempting automatic installation..."
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        sudo apt-get update && sudo apt-get install -y maven
+    elif [[ "$OSTYPE" == "darwin"* ]] && command -v brew >/dev/null 2>&1; then
+        brew install maven
+    else
+        die "Maven is required. Please install Maven manually."
+    fi
+fi
+
 [ -f pom.xml ] || die "no pom.xml here. Run this script from inside the project root folder."
 
 # --- build & start ----------------------------------------------------------
 
 say "Building Penny Pals with Maven..."
-./mvnw clean package -DskipTests
+mvn clean package -DskipTests -q
 
 SERVER_PORT="${PORT_OVERRIDE:-8080}"
 say "Starting on http://localhost:${SERVER_PORT} -- press Ctrl+C to stop"
