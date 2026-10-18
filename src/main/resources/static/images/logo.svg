@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+    <defs>
+        <!-- Soft Google-style launcher shadow -->
+        <filter id="iconShadow" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#001F3F" flood-opacity="0.14" />
+        </filter>
+    </defs>
+
+    <g filter="url(#iconShadow)">
+
+        <!-- 1. EXTRA THICK TAIL FINS (Google Red - #EA4335) -->
+        <!-- Top Tail Fin -->
+        <path d="M 175 235
+             C 105 130, 50 165, 35 105
+             C 85 205, 105 245, 175 255 Z"
+              fill="#EA4335" />
+
+        <!-- Bottom Tail Fin -->
+        <path d="M 145 277
+             C 105 287, 85 327, 35 422
+             C 50 362, 105 397, 175 277 Z"
+              fill="#EA4335" />
+
+        <!--        &lt;!&ndash; Tail Center Hub Joining Fill &ndash;&gt;-->
+        <!--        <path d="M 175 230 C 130 240, 130 272, 175 282 Z" fill="#EA4335" />-->
+
+        <!-- 2. FISH BODY (Google Blue - #4285F4) -->
+        <path d="M 160 256
+             C 160 175, 235 140, 315 140
+             C 395 140, 448 190, 448 256
+             C 448 322, 395 372, 315 372
+             C 235 372, 160 337, 160 256 Z"
+              fill="#4285F4" />
+
+        <!-- Dollar Sign ($) Emblem placed directly on the Fish Body in Google Yellow -->
+        <path d="M 230 180 L 230 332
+     M 252 200 C 252 200, 208 192, 208 226 C 208 260, 252 254, 252 288 C 252 322, 208 312, 208 312"
+              fill="none"
+              stroke="#FBBC04"
+              stroke-width="12"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              transform="translate(40, 0)" />
+
+        <!-- 3. MINIMALIST EYE (White + Blue) -->
+        <circle cx="368" cy="224" r="26" fill="#FFFFFF" />
+        <circle cx="376" cy="224" r="13" fill="#1A73E8" />
+        <circle cx="380" cy="218" r="5" fill="#FFFFFF" />
+
+        <!-- 4. PEARL ACCENT (Google Green - #34A853) -->
+        <circle cx="376" cy="328" r="28" fill="#34A853" />
+        <circle cx="368" cy="320" r="7" fill="#FFFFFF" opacity="0.85" />
+
+    </g>
+</svg>
