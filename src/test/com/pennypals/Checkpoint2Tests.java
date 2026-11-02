@@ -2,7 +2,6 @@ package com.pennypals;
 
 import com.pennypals.model.*;
 import com.pennypals.repository.*;
-import com.pennypals.model.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
-class PennyPalsDatabaseTests {
+class Checkpoint2Tests {
 
     @Autowired
     private UserRepository userRepository;
@@ -136,7 +135,7 @@ class PennyPalsDatabaseTests {
         var transactions = transactionRepository.findByUserId(user.getId());
         assertThat(transactions).isNotEmpty();
 
-        Long txIdToDelete = transactions.getFirst().getId();
+        Long txIdToDelete = transactions.get(0).getId();
         transactionRepository.deleteById(txIdToDelete);
 
         var remainingTransactions = transactionRepository.findByUserId(user.getId());
@@ -168,7 +167,7 @@ class PennyPalsDatabaseTests {
     void test8_UpdateBudgetProgress() {
         User user = userRepository.findByUsername("demo_user").orElseThrow();
         var budgets = budgetRepository.findByUserId(user.getId());
-        Budget foodBudget = budgets.getFirst();
+        Budget foodBudget = budgets.get(0);
 
         foodBudget.setCurrentProgress(new BigDecimal("150.00"));
         budgetRepository.save(foodBudget);
