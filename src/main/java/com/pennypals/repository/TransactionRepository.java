@@ -9,4 +9,7 @@ import java.util.List;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     List<Transaction> findByUserId(Long userId);
+
+    // Spring Data JPA derived query to fetch top 5 recent transactions ordered by date and ID descending
+    List<Transaction> findTop5ByUserIdOrderByDateDescIdDesc(Long userId);
 }

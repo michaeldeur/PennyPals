@@ -117,6 +117,45 @@
     <!-- Centered Form Card -->
     <div class="auth-card">
 
+        <!-- Notification Alert Banners -->
+        <!-- Existing Alerts -->
+        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <strong>Login Failed:</strong> Invalid username or password.
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div th:if="${param.logout}" class="alert alert-success alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <strong>Logged Out:</strong> You have been successfully logged out.
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div th:if="${param.registered}" class="alert alert-success alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <strong>Success!</strong> Account created. Please sign in.
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- NEW: Password Reset Success / Error Banners -->
+        <div th:if="${param.resetSuccess}" class="alert alert-success alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <strong>Success!</strong> Password reset successfully. Please sign in.
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div th:if="${param.resetErrorStep1}" class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <strong>Error:</strong> Email address not found in our system.
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div th:if="${param.resetErrorStep2}" class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <strong th:text="${errorMessage}">Reset Failed:</strong> Incorrect security answer.
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Controller Dynamic Error Attribute -->
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <span th:text="${errorMessage}">Error message</span>
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
         <!-- 1. Sign In Form -->
         <div id="loginSection">
             <h3 class="mb-4 fw-normal">Sign In</h3>
@@ -142,29 +181,29 @@
         <!-- 2. Register Form -->
         <div id="registerSection" style="display: none;">
             <h3 class="mb-4 fw-normal">Create Account</h3>
-            <form th:action="@{/register}" method="post">
+            <form th:action="@{/register}" th:object="${registrationDto}" method="post">
                 <div class="mb-3">
-                    <input type="text" class="form-control" name="username" placeholder="Choose Username" required>
+                    <input type="text" class="form-control" th:field="*{username}" placeholder="Choose Username" required>
                 </div>
                 <div class="mb-3">
-                    <input type="email" class="form-control" name="email" placeholder="Email Address" required>
+                    <input type="email" class="form-control" th:field="*{email}" placeholder="Email Address" required>
                 </div>
                 <div class="mb-3">
-                    <input type="password" class="form-control" name="password" placeholder="Choose Password" required>
+                    <input type="password" class="form-control" th:field="*{password}" placeholder="Choose Password" required>
                 </div>
 
                 <!-- Security Question Selection -->
                 <div class="mb-3">
-                    <select class="form-select" name="securityQuestion" required>
+                    <select class="form-select" th:field="*{securityQuestion}" required>
                         <option value="" disabled selected>Select a security question...</option>
-                        <option value="What was the name of your first pet?">What was the name of your first pet?</option>
-                        <option value="What elementary school did you attend?">What elementary school did you attend?</option>
-                        <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
-                        <option value="In what city were you born?">In what city were you born?</option>
+                        <option value="1">What was the name of your first pet?</option>
+                        <option value="2">What elementary school did you attend?</option>
+                        <option value="3">What is your mother's maiden name?</option>
+                        <option value="4">In what city were you born?</option>
                     </select>
                 </div>
                 <div class="mb-4">
-                    <input type="text" class="form-control" name="securityAnswer" placeholder="Security Answer" required>
+                    <input type="text" class="form-control" th:field="*{securityAnswer}" placeholder="Security Answer" required>
                 </div>
 
                 <div class="d-grid mb-3">
@@ -193,16 +232,17 @@
             </div>
         </div>
 
-        <!-- 4. Security Question Reset - Step 2: Answer & Change Password -->
+        <!-- 4. Security Question Reset - Step 2 -->
         <div id="resetStep2" style="display: none;">
             <h3 class="mb-3 fw-normal">Reset Password</h3>
             <p class="text-muted small mb-2">Please answer your security question below:</p>
 
             <form th:action="@{/forgot-password/reset}" method="post">
-                <input type="hidden" name="email" id="resetEmail" th:value="${email}">
+                <!-- Populated automatically by JS from query params -->
+                <input type="hidden" name="email" id="resetEmailInput">
 
-                <div class="p-2 mb-3 bg-light rounded text-dark border small fw-bold" id="displayQuestion">
-                    <span th:text="${securityQuestion}">What was the name of your first pet?</span>
+                <div class="p-2 mb-3 bg-light rounded text-dark border small fw-bold">
+                    <span th:text="${securityQuestion}">Security question goes here</span>
                 </div>
 
                 <div class="mb-3">
@@ -239,6 +279,27 @@
 
         document.getElementById(targetId).style.display = 'block';
     }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Always grab email from query params if present
+        if (urlParams.has('email')) {
+            const emailVal = urlParams.get('email');
+            document.getElementById('resetEmailInput').value = emailVal;
+            // Also store it on error retry if needed
+            const errorEmailInput = document.getElementById('resetEmailErrorInput');
+            if (errorEmailInput) errorEmailInput.value = emailVal;
+        }
+
+        if (urlParams.has('registerError')) {
+            switchView('registerSection');
+        } else if (urlParams.has('resetErrorStep1')) {
+            switchView('resetStep1');
+        } else if (urlParams.has('resetErrorStep2') || urlParams.has('resetStep2')) {
+            switchView('resetStep2');
+        }
+    });
 </script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS users (
-                                     id IDENTITY PRIMARY KEY,
-                                     username VARCHAR(255) NOT NULL UNIQUE,
+    id IDENTITY PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     security_question INT NOT NULL,
@@ -8,17 +8,17 @@ CREATE TABLE IF NOT EXISTS users (
     );
 
 CREATE TABLE IF NOT EXISTS user_profiles (
-                                             id IDENTITY PRIMARY KEY,
-                                             user_id BIGINT NOT NULL UNIQUE,
-                                             pennies INT NOT NULL DEFAULT 0,
-                                             updated_at TIMESTAMP NOT NULL,
-                                             CONSTRAINT fk_user_profile FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    id IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL UNIQUE,
+    pennies INT NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT fk_user_profile FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
 CREATE TABLE IF NOT EXISTS transactions (
-                                            id IDENTITY PRIMARY KEY,
-                                            user_id BIGINT NOT NULL,
-                                            type VARCHAR(50) NOT NULL,
+    id IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    type VARCHAR(50) NOT NULL,
     category VARCHAR(100) NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     date DATE NOT NULL,
@@ -27,9 +27,9 @@ CREATE TABLE IF NOT EXISTS transactions (
     );
 
 CREATE TABLE IF NOT EXISTS budgets (
-                                       id IDENTITY PRIMARY KEY,
-                                       user_id BIGINT NOT NULL,
-                                       type VARCHAR(50) NOT NULL,
+    id IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    type VARCHAR(50) NOT NULL,
     category VARCHAR(100) NOT NULL,
     monthly_limit DECIMAL(10, 2) NOT NULL,
     current_progress DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
@@ -38,9 +38,9 @@ CREATE TABLE IF NOT EXISTS budgets (
     );
 
 CREATE TABLE IF NOT EXISTS unlocked_items (
-                                              id IDENTITY PRIMARY KEY,
-                                              user_id BIGINT NOT NULL,
-                                              item_name VARCHAR(100) NOT NULL,
+    id IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    item_name VARCHAR(100) NOT NULL,
     item_type VARCHAR(50) NOT NULL,
     color_hex VARCHAR(20) NOT NULL,
     currency_type VARCHAR(50) NOT NULL,
