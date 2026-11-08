@@ -114,6 +114,29 @@
             background-color: #71bce0;
             color: #000000;
         }
+
+        /* Mobile Responsiveness for Header & Nav */
+        @media (max-width: 768px) {
+            .custom-header .container-fluid {
+                flex-direction: column;
+                gap: 0.75rem;
+                text-align: center;
+            }
+            .custom-header .d-flex.align-items-center {
+                justify-content: center;
+            }
+            .nav-bar-strip .container-fluid {
+                justify-content: center !important;
+                gap: 0.25rem 0.5rem;
+            }
+            .nav-bar-strip a {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.85rem;
+            }
+            .transactions-card {
+                padding: 1rem 0.5rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -190,7 +213,7 @@
 
                 <!-- Submit Button -->
                 <div class="d-grid">
-                    <button type="submit" class="btn btn-add py-2">Add</button>
+                    <button type="submit" class="btn btn-add py-2">Add (+10 Pennies)</button>
                 </div>
             </form>
         </div>

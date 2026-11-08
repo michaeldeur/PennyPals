@@ -1,5 +1,6 @@
 package com.pennypals.controller;
 
+
 import com.pennypals.model.Transaction;
 import com.pennypals.model.User;
 import com.pennypals.repository.UserProfileRepository;
@@ -13,8 +14,8 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Controller
@@ -74,14 +75,47 @@ public class TransactionController {
     }
 
     @GetMapping("/transactions")
-    public String transactionsPage(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+    public String transactionsPage(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false, defaultValue = "ALL") String type,
+            @RequestParam(required = false, defaultValue = "ALL") String category,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) BigDecimal minAmount,
+            @RequestParam(required = false) BigDecimal maxAmount,
+            @AuthenticationPrincipal UserDetails userDetails,
+            Model model) {
+
+
         addProfileToModel(userDetails, model);
 
         if (userDetails != null) {
             User user = userService.findByUsername(userDetails.getUsername());
             if (user != null) {
-                List<Transaction> transactions = transactionService.getUserTransactions(user.getId());
+                List<Transaction> transactions = transactionService.searchTransactions(
+                        user.getId(), keyword, type, category, startDate, endDate, minAmount, maxAmount
+                );
+
+
+                // --- ADD THIS LINE ---
+                java.util.Map<String, BigDecimal> categorySpentMap = transactionService.getCategorySpentTotals(user.getId());
+                model.addAttribute("categorySpentMap", categorySpentMap);
+                // ---------------------
+
+
                 model.addAttribute("transactions", transactions);
+                model.addAttribute("keyword", keyword);
+                model.addAttribute("selectedType", type);
+                model.addAttribute("selectedCategory", category);
+                model.addAttribute("startDate", startDate);
+                model.addAttribute("endDate", endDate);
+                model.addAttribute("minAmount", minAmount);
+                model.addAttribute("maxAmount", maxAmount);
+
+
+                LocalDate today = LocalDate.now();
+                int daysLeft = today.lengthOfMonth() - today.getDayOfMonth();
+                model.addAttribute("daysLeft", daysLeft);
             }
         }
         return "transactions";

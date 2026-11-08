@@ -79,6 +79,13 @@
             font-size: 1.8rem;
             color: #000000;
             text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .days-left-header {
+            font-weight: 500;
+            font-size: 1.1rem;
+            color: #333333;
+            text-align: center;
             margin-bottom: 1.5rem;
         }
         .transactions-card {
@@ -116,6 +123,7 @@
 </head>
 <body>
 
+
 <!-- Header Section -->
 <header class="custom-header py-3 px-4 shadow-sm">
     <div class="container-fluid d-flex align-items-center justify-content-between">
@@ -134,6 +142,7 @@
     </div>
 </header>
 
+
 <!-- Navigation Bar Strip -->
 <nav class="nav-bar-strip">
     <div class="container-fluid d-flex justify-content-around align-items-center flex-wrap">
@@ -146,9 +155,11 @@
     </div>
 </nav>
 
+
 <!-- Main Content Area -->
 <main class="main-container">
     <div class="content-wrapper">
+
 
         <!-- Flash Banners -->
         <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show w-100" role="alert">
@@ -160,10 +171,74 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
+
         <!-- Centered Transactions Page Title -->
         <h2 class="page-title">Transactions</h2>
 
-        <!-- Transactions Table Card with Row Management Actions -->
+
+        <!-- Days Left in Monthly Budget Header -->
+        <div class="days-left-header">
+            Days Left In Monthly Budget: <span th:text="${daysLeft != null ? daysLeft : '21'}">21</span> days
+        </div>
+
+
+        <!-- Stretch Goal Search & Filtering Control Card -->
+        <div class="card bg-light border-secondary mb-4 w-100 p-3">
+            <form method="get" th:action="@{/transactions}" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-1">Keyword</label>
+                    <input type="text" class="form-control form-control-sm" name="keyword" th:value="${keyword}" placeholder="Search notes/category...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1">Type</label>
+                    <select class="form-select form-select-sm" name="type">
+                        <option value="ALL" th:selected="${selectedType == 'ALL'}">All Types</option>
+                        <option value="INCOME" th:selected="${selectedType == 'INCOME'}">Income</option>
+                        <option value="EXPENSE" th:selected="${selectedType == 'EXPENSE'}">Expense</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1">Category</label>
+                    <select class="form-select form-select-sm" name="category">
+                        <option value="ALL" th:selected="${selectedCategory == 'ALL'}">All Categories</option>
+                        <option value="Income" th:selected="${selectedCategory == 'Income'}">Income</option>
+                        <option value="Giving" th:selected="${selectedCategory == 'Giving'}">Giving</option>
+                        <option value="Savings" th:selected="${selectedCategory == 'Savings'}">Savings</option>
+                        <option value="Housing" th:selected="${selectedCategory == 'Housing'}">Housing</option>
+                        <option value="Transportation" th:selected="${selectedCategory == 'Transportation'}">Transportation</option>
+                        <option value="Food" th:selected="${selectedCategory == 'Food'}">Food</option>
+                        <option value="Personal" th:selected="${selectedCategory == 'Personal'}">Personal</option>
+                        <option value="Lifestyle" th:selected="${selectedCategory == 'Lifestyle'}">Lifestyle</option>
+                        <option value="Health" th:selected="${selectedCategory == 'Health'}">Health</option>
+                        <option value="Insurance" th:selected="${selectedCategory == 'Insurance'}">Insurance</option>
+                        <option value="Non-mortgage Debts" th:selected="${selectedCategory == 'Non-mortgage Debts'}">Non-mortgage Debts</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1">Start Date</label>
+                    <input type="date" class="form-control form-control-sm" name="startDate" th:value="${startDate}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1">End Date</label>
+                    <input type="date" class="form-control form-control-sm" name="endDate" th:value="${endDate}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1">Min Amount ($)</label>
+                    <input type="number" step="0.01" class="form-control form-control-sm" name="minAmount" th:value="${minAmount}" placeholder="0.00">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1">Max Amount ($)</label>
+                    <input type="number" step="0.01" class="form-control form-control-sm" name="maxAmount" th:value="${maxAmount}" placeholder="1000.00">
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-fill"><i class="bi bi-funnel"></i> Filter</button>
+                    <a th:href="@{/transactions}" class="btn btn-outline-secondary btn-sm">Reset</a>
+                </div>
+            </form>
+        </div>
+
+
+        <!-- Merged Transactions Table Card with Default $100 Budgeted Column -->
         <div class="transactions-card">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -173,6 +248,7 @@
                         <th>Category</th>
                         <th>Type</th>
                         <th>Notes</th>
+                        <th class="text-end">Spent / Budgeted</th>
                         <th class="text-end">Amount</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -183,11 +259,23 @@
                         <td class="small" th:text="${tx.date != null ? #temporals.format(tx.date, 'yyyy-MM-dd') : 'N/A'}">2026-10-01</td>
                         <td class="fw-medium" th:text="${tx.category}">Food</td>
                         <td>
-                            <span class="badge"
-                                  th:classappend="${tx.type == 'INCOME' ? 'bg-success-subtle text-success border border-success' : 'bg-danger-subtle text-danger border border-danger'}"
-                                  th:text="${tx.type}">EXPENSE</span>
+                           <span class="badge"
+                                 th:classappend="${tx.type == 'INCOME' ? 'bg-success-subtle text-success border border-success' : 'bg-danger-subtle text-danger border border-danger'}"
+                                 th:text="${tx.type}">EXPENSE</span>
                         </td>
                         <td class="text-muted small" th:text="${tx.notes != null && !tx.notes.isBlank() ? tx.notes : '-'}">Grocery run</td>
+
+
+                        <!-- Fixed Spent / Budgeted Column: N/A for Income, clean positive currency total vs $100.00 for others -->
+                        <td class="text-end text-muted small fw-medium">
+                            <span th:if="${tx.category == 'Income'}">N/A</span>
+                            <span th:unless="${tx.category == 'Income'}"
+                                  th:text="${'$' + #numbers.formatDecimal(categorySpentMap[tx.category] != null ? categorySpentMap[tx.category] : 0, 1, 2) + ' / $100.00'}">
+                                 $0.00 / $100.00
+                           </span>
+                        </td>
+
+
                         <td class="text-end fw-bold"
                             th:classappend="${tx.type == 'INCOME' ? 'text-success' : 'text-dark'}"
                             th:text="${(tx.type == 'INCOME' ? '+' : '-') + '$' + #numbers.formatDecimal(tx.amount, 1, 2)}">-$45.50</td>
@@ -204,11 +292,12 @@
                         </td>
                     </tr>
 
-                    <!-- Empty List State -->
+
+                    <!-- Empty Result Alert Control -->
                     <tr th:if="${transactions == null || transactions.empty}">
-                        <td colspan="6" class="text-center py-4 text-muted">
+                        <td colspan="7" class="text-center py-4 text-muted">
                             <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                            No transactions recorded yet.
+                            No transactions found matching your search criteria.
                         </td>
                     </tr>
                     </tbody>
@@ -217,6 +306,7 @@
         </div>
     </div>
 </main>
+
 
 <!-- Inline Row Update Modals (Rendered dynamically per transaction) -->
 <div th:each="tx : ${transactions}">
@@ -271,6 +361,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- Delete Confirmation Modals (Rendered dynamically per transaction) -->
 <div th:each="tx : ${transactions}">

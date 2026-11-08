@@ -50,18 +50,6 @@ public class DashboardController {
         return "aquarium";
     }
 
-    @GetMapping("/transactions")
-    public String transactionsPage(Principal principal, Model model) {
-        addProfileToModel(principal, model);
-        if (principal != null) {
-            userRepository.findByUsername(principal.getName()).ifPresent(user -> {
-                // Fetch only the last 5 transactions belonging to the current user
-                model.addAttribute("transactions", transactionRepository.findTop5ByUserIdOrderByDateDescIdDesc(user.getId()));
-            });
-        }
-        return "transactions";
-    }
-
     @GetMapping("/budget")
     public String budgetPage(Principal principal, Model model) {
         addProfileToModel(principal, model);
