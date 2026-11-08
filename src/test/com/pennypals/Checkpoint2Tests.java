@@ -2,10 +2,12 @@ package com.pennypals;
 
 import com.pennypals.model.*;
 import com.pennypals.repository.*;
+import com.pennypals.repository.TransactionSpecifications;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -68,7 +70,10 @@ class Checkpoint2Tests {
         Transaction savedTx = transactionRepository.save(newTx);
         assertThat(savedTx.getId()).isNotNull();
 
-        var userTransactions = transactionRepository.findByUserId(user.getId());
+        // Query transactions belonging to user (2 initial seeds + 1 new = 3)
+        var userTransactions = transactionRepository.findAll(
+                Specification.where(TransactionSpecifications.belongsToUser(user.getId()))
+        );
         assertThat(userTransactions).hasSize(3);
     }
 

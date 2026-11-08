@@ -269,10 +269,7 @@
                         <!-- Fixed Spent / Budgeted Column: N/A for Income, clean positive currency total vs $100.00 for others -->
                         <td class="text-end text-muted small fw-medium">
                             <span th:if="${tx.category == 'Income'}">N/A</span>
-                            <span th:unless="${tx.category == 'Income'}"
-                                  th:text="${'$' + #numbers.formatDecimal(categorySpentMap[tx.category] != null ? categorySpentMap[tx.category] : 0, 1, 2) + ' / $100.00'}">
-                                 $0.00 / $100.00
-                           </span>
+                            <p class="text-muted small mb-0">Category: <strong th:text="${tx.category}">Food</strong> | Amount: <strong th:text="${'$' + (#numbers.formatDecimal(tx.amount, 1, 2))}">$0.00</strong></p>
                         </td>
 
 
@@ -293,11 +290,11 @@
                     </tr>
 
 
-                    <!-- Empty Result Alert Control -->
-                    <tr th:if="${transactions == null || transactions.empty}">
-                        <td colspan="7" class="text-center py-4 text-muted">
+                    <!-- Empty List State -->
+                    <tr th:if="${transactions == null || transactions.isEmpty()}">
+                        <td colspan="6" class="text-center py-4 text-muted">
                             <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                            No transactions found matching your search criteria.
+                            No transactions recorded yet.
                         </td>
                     </tr>
                     </tbody>
