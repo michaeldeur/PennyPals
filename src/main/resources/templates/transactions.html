@@ -6,6 +6,7 @@
     <title>Penny Pals - Transactions</title>
     <!-- Bootstrap 5 CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         html, body {
             height: 100%;
@@ -61,55 +62,62 @@
         .main-container {
             flex: 1;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
             width: 100%;
-            padding: 2rem;
+            padding: 2rem 1rem;
         }
         .content-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 900px;
-            position: relative;
-        }
-        .page-title-section {
-            width: 100%;
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-        @media (min-width: 768px) {
-            .content-wrapper {
-                flex-direction: row;
-                justify-content: center;
-                align-items: flex-start;
-            }
-            .page-title-section {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: auto;
-                text-align: left;
-                margin-bottom: 0;
-            }
+            max-width: 950px;
         }
         .page-title {
             font-weight: 500;
             font-size: 1.8rem;
             color: #000000;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .days-left-header {
+            font-weight: 500;
+            font-size: 1.1rem;
+            color: #333333;
+            text-align: center;
+            margin-bottom: 1.5rem;
         }
         .transactions-card {
             border: 1px solid #ced4da;
             border-radius: 12px;
-            padding: 2rem;
+            padding: 1.5rem;
             background-color: #ffffff;
             box-shadow: 0 4px 6px rgba(0,0,0,0.02);
             width: 100%;
-            max-width: 750px;
         }
-        .table > :not(caption) > * > * {
-            padding: 0.75rem 0.5rem;
+
+        /* Mobile Responsiveness for Header & Nav */
+        @media (max-width: 768px) {
+            .custom-header .container-fluid {
+                flex-direction: column;
+                gap: 0.75rem;
+                text-align: center;
+            }
+            .custom-header .d-flex.align-items-center {
+                justify-content: center;
+            }
+            .nav-bar-strip .container-fluid {
+                justify-content: center !important;
+                gap: 0.25rem 0.5rem;
+            }
+            .nav-bar-strip a {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.85rem;
+            }
+            .transactions-card {
+                padding: 1rem 0.5rem;
+            }
         }
     </style>
 </head>
@@ -148,23 +156,23 @@
 <!-- Main Content Area -->
 <main class="main-container">
     <div class="content-wrapper">
-        <div class="page-title-section">
-            <h2 class="page-title"></h2>
+
+        <!-- Flash Banners -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show w-100" role="alert">
+            <span th:text="${successMessage}">Success</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show w-100" role="alert">
+            <span th:text="${errorMessage}">Error</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
+        <!-- Centered Transactions Page Title -->
+        <h2 class="page-title">Transactions</h2>
+
+        <!-- Transactions Table Card -->
         <div class="transactions-card">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="fw-normal text-success mb-0">Recent Activity (Last 5)</h4>
-                <a th:href="@{/add-transaction}" class="btn btn-success btn-sm">+ Add New</a>
-            </div>
-
-            <!-- Empty State -->
-            <div th:if="${#lists.isEmpty(transactions)}" class="text-center py-4 text-muted">
-                <p class="mb-0">No transactions recorded yet.</p>
-            </div>
-
-            <!-- Recent Transactions Table -->
-            <div th:if="${!#lists.isEmpty(transactions)}" class="table-responsive">
+            <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                     <tr>
@@ -176,18 +184,27 @@
                     </tr>
                     </thead>
                     <tbody>
+                    <!-- Iterate over transactions (Read Operation Only) -->
                     <tr th:each="tx : ${transactions}">
                         <td class="small" th:text="${tx.date != null ? #temporals.format(tx.date, 'yyyy-MM-dd') : 'N/A'}">2026-10-01</td>
                         <td class="fw-medium" th:text="${tx.category}">Food</td>
                         <td>
-                                <span class="badge"
-                                      th:classappend="${tx.type == 'INCOME' ? 'bg-success-subtle text-success border border-success' : 'bg-danger-subtle text-danger border border-danger'}"
-                                      th:text="${tx.type}">EXPENSE</span>
+                            <span class="badge"
+                                  th:classappend="${tx.type == 'INCOME' ? 'bg-success-subtle text-success border border-success' : 'bg-danger-subtle text-danger border border-danger'}"
+                                  th:text="${tx.type}">EXPENSE</span>
                         </td>
                         <td class="text-muted small" th:text="${tx.notes != null && !tx.notes.isBlank() ? tx.notes : '-'}">Grocery run</td>
                         <td class="text-end fw-bold"
                             th:classappend="${tx.type == 'INCOME' ? 'text-success' : 'text-dark'}"
                             th:text="${(tx.type == 'INCOME' ? '+' : '-') + '$' + #numbers.formatDecimal(tx.amount, 1, 2)}">-$45.50</td>
+                    </tr>
+
+                    <!-- Empty List State -->
+                    <tr th:if="${transactions == null || transactions.empty}">
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            No transactions recorded yet.
+                        </td>
                     </tr>
                     </tbody>
                 </table>
