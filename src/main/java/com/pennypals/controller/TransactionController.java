@@ -12,6 +12,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.math.BigDecimal;
 import java.util.List;
 
 @Controller
@@ -82,5 +85,39 @@ public class TransactionController {
             }
         }
         return "transactions";
+    }
+
+    @PostMapping("/transactions/update/{id}")
+    public String updateTransaction(
+            @PathVariable Long id,
+            @RequestParam String category,
+            @RequestParam BigDecimal amount,
+            @RequestParam String type,
+            @RequestParam(required = false) String notes,
+            @AuthenticationPrincipal UserDetails userDetails,
+            RedirectAttributes redirectAttributes) {
+        try {
+            User user = userService.findByUsername(userDetails.getUsername());
+            transactionService.updateTransaction(id, user.getId(), category, amount, type, notes);
+            redirectAttributes.addFlashAttribute("successMessage", "Transaction updated successfully.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/transactions";
+    }
+
+    @PostMapping("/transactions/delete/{id}")
+    public String deleteTransaction(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails,
+            RedirectAttributes redirectAttributes) {
+        try {
+            User user = userService.findByUsername(userDetails.getUsername());
+            transactionService.deleteTransactionWithBalanceRecalculation(id, user.getId());
+            redirectAttributes.addFlashAttribute("successMessage", "Transaction removed successfully.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/transactions";
     }
 }

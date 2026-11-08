@@ -79,13 +79,6 @@
             font-size: 1.8rem;
             color: #000000;
             text-align: center;
-            margin-bottom: 0.5rem;
-        }
-        .days-left-header {
-            font-weight: 500;
-            font-size: 1.1rem;
-            color: #333333;
-            text-align: center;
             margin-bottom: 1.5rem;
         }
         .transactions-card {
@@ -170,7 +163,7 @@
         <!-- Centered Transactions Page Title -->
         <h2 class="page-title">Transactions</h2>
 
-        <!-- Transactions Table Card -->
+        <!-- Transactions Table Card with Row Management Actions -->
         <div class="transactions-card">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -181,10 +174,11 @@
                         <th>Type</th>
                         <th>Notes</th>
                         <th class="text-end">Amount</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <!-- Iterate over transactions (Read Operation Only) -->
+                    <!-- Iterate over transactions -->
                     <tr th:each="tx : ${transactions}">
                         <td class="small" th:text="${tx.date != null ? #temporals.format(tx.date, 'yyyy-MM-dd') : 'N/A'}">2026-10-01</td>
                         <td class="fw-medium" th:text="${tx.category}">Food</td>
@@ -197,11 +191,22 @@
                         <td class="text-end fw-bold"
                             th:classappend="${tx.type == 'INCOME' ? 'text-success' : 'text-dark'}"
                             th:text="${(tx.type == 'INCOME' ? '+' : '-') + '$' + #numbers.formatDecimal(tx.amount, 1, 2)}">-$45.50</td>
+                        <td class="text-end">
+                            <!-- Inline Row Update Trigger Modal -->
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-1 me-1" data-bs-toggle="modal" th:data-bs-target="${'#editModal' + tx.id}" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <!-- Delete Modal Trigger Button -->
+                            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1" title="Delete"
+                                    data-bs-toggle="modal" th:data-bs-target="${'#deleteModal' + tx.id}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
                     </tr>
 
                     <!-- Empty List State -->
                     <tr th:if="${transactions == null || transactions.empty}">
-                        <td colspan="5" class="text-center py-4 text-muted">
+                        <td colspan="6" class="text-center py-4 text-muted">
                             <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                             No transactions recorded yet.
                         </td>
@@ -212,6 +217,85 @@
         </div>
     </div>
 </main>
+
+<!-- Inline Row Update Modals (Rendered dynamically per transaction) -->
+<div th:each="tx : ${transactions}">
+    <div class="modal fade" th:id="${'editModal' + tx.id}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/transactions/update/{id}(id=${tx.id})}" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Transaction</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Type</label>
+                            <select class="form-select" name="type" required>
+                                <option value="INCOME" th:selected="${tx.type == 'INCOME'}">Income</option>
+                                <option value="EXPENSE" th:selected="${tx.type == 'EXPENSE'}">Expense</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Category</label>
+                            <select class="form-select" name="category" required>
+                                <option value="" disabled>Select</option>
+                                <option value="Income" th:selected="${tx.category == 'Income'}">Income</option>
+                                <option value="Giving" th:selected="${tx.category == 'Giving'}">Giving</option>
+                                <option value="Savings" th:selected="${tx.category == 'Savings'}">Savings</option>
+                                <option value="Housing" th:selected="${tx.category == 'Housing'}">Housing</option>
+                                <option value="Transportation" th:selected="${tx.category == 'Transportation'}">Transportation</option>
+                                <option value="Food" th:selected="${tx.category == 'Food'}">Food</option>
+                                <option value="Personal" th:selected="${tx.category == 'Personal'}">Personal</option>
+                                <option value="Lifestyle" th:selected="${tx.category == 'Lifestyle'}">Lifestyle</option>
+                                <option value="Health" th:selected="${tx.category == 'Health'}">Health</option>
+                                <option value="Insurance" th:selected="${tx.category == 'Insurance'}">Insurance</option>
+                                <option value="Non-mortgage Debts" th:selected="${tx.category == 'Non-mortgage Debts'}">Non-mortgage Debts</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Amount ($)</label>
+                            <input type="number" step="0.01" class="form-control" name="amount" th:value="${tx.amount}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Notes</label>
+                            <textarea class="form-control" name="notes" rows="2" th:text="${tx.notes}"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modals (Rendered dynamically per transaction) -->
+<div th:each="tx : ${transactions}">
+    <div class="modal fade" th:id="${'deleteModal' + tx.id}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm Deletion</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-1">Are you sure you want to permanently delete this transaction?</p>
+                    <p class="text-muted small mb-0">Category: <strong th:text="${tx.category}">Food</strong> | Amount: <strong th:text="${'$' + #numbers.formatDecimal(tx.amount, 1, 2)}">$0.00</strong></p>
+                    <p class="text-danger small mt-2 mb-0"><i class="bi bi-exclamation-triangle"></i> This will also recalculate and adjust your reward pennies balance.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <form th:action="@{/transactions/delete/{id}(id=${tx.id})}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-danger btn-sm">Yes, Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Footer Section -->
 <footer class="custom-header text-center py-3">

@@ -8,7 +8,9 @@ import com.pennypals.repository.UserProfileRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class TransactionService {
@@ -19,6 +21,10 @@ public class TransactionService {
     public TransactionService(TransactionRepository transactionRepository, UserProfileRepository userProfileRepository) {
         this.transactionRepository = transactionRepository;
         this.userProfileRepository = userProfileRepository;
+    }
+
+    public List<Transaction> getUserTransactions(Long userId) {
+        return transactionRepository.findByUserIdOrderByDateDescIdDesc(userId);
     }
 
     @Transactional
@@ -44,5 +50,38 @@ public class TransactionService {
             profile.setPennies(profile.getPennies() + 10);
             userProfileRepository.save(profile);
         }
+    }
+
+    @Transactional
+    public void updateTransaction(Long transactionId, Long userId, String category, BigDecimal amount, String type, String notes) {
+        Transaction tx = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
+
+        if (!tx.getUser().getId().equals(userId)) {
+            throw new SecurityException("Unauthorized access to transaction");
+        }
+
+        tx.setCategory(category);
+        tx.setAmount(amount);
+        tx.setType(type);
+        tx.setNotes(notes);
+
+        transactionRepository.save(tx);
+    }
+
+    @Transactional
+    public void deleteTransactionWithBalanceRecalculation(Long transactionId, Long userId) {
+        Transaction tx = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
+
+        if (!tx.getUser().getId().equals(userId)) {
+            throw new SecurityException("Unauthorized access to transaction");
+        }
+
+        UserProfile profile = userProfileRepository.findByUserId(userId).orElseThrow();
+        profile.setPennies(Math.max(0, profile.getPennies() - 10));
+        userProfileRepository.save(profile);
+
+        transactionRepository.delete(tx);
     }
 }
