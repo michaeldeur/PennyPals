@@ -266,16 +266,17 @@
                         <td class="text-muted small" th:text="${tx.notes != null && !tx.notes.isBlank() ? tx.notes : '-'}">Grocery run</td>
 
 
-                        <!-- Fixed Spent / Budgeted Column: N/A for Income, clean positive currency total vs $100.00 for others -->
                         <td class="text-end text-muted small fw-medium">
                             <span th:if="${tx.category == 'Income'}">N/A</span>
-                            <p class="text-muted small mb-0">Category: <strong th:text="${tx.category}">Food</strong> | Amount: <strong th:text="${'$' + (#numbers.formatDecimal(tx.amount, 1, 2))}">$0.00</strong></p>
+                            <span th:unless="${tx.category == 'Income'}"
+                                  th:text="${'$' + (#numbers.formatDecimal((categorySpentMap != null && categorySpentMap[tx.category] != null ? categorySpentMap[tx.category] : 0), 1, 2)) + ' / $100.00'}">$0.00 / $100.00
+                            </span>
                         </td>
 
 
                         <td class="text-end fw-bold"
                             th:classappend="${tx.type == 'INCOME' ? 'text-success' : 'text-dark'}"
-                            th:text="${(tx.type == 'INCOME' ? '+' : '-') + '$' + #numbers.formatDecimal(tx.amount, 1, 2)}">-$45.50</td>
+                            th:text="${(tx.type == 'INCOME' ? '+' : '-') + '$' + #numbers.formatDecimal(tx.amount, 1, 2)}">$0.00</td>
                         <td class="text-end">
                             <!-- Inline Row Update Trigger Modal -->
                             <button class="btn btn-sm btn-outline-secondary py-0 px-1 me-1" data-bs-toggle="modal" th:data-bs-target="${'#editModal' + tx.id}" title="Edit">
