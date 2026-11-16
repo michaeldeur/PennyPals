@@ -157,6 +157,42 @@ public class BudgetController {
         return "redirect:/budget";
     }
 
+    @PostMapping("/evaluate-rewards")
+    public String evaluateRewards(@AuthenticationPrincipal UserDetails userDetails, RedirectAttributes redirectAttributes) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // End-of-month reward engine check logic evaluating if expenses are under budget limits
+        List<Budget> budgets = budgetRepository.findByUser(user);
+        Map<String, BigDecimal> categorySpentMap = transactionService.getCategorySpentTotals(user.getId());
+
+        boolean underBudget = !budgets.isEmpty();
+        for (Budget b : budgets) {
+            BigDecimal spent = categorySpentMap.getOrDefault(b.getCategory(), BigDecimal.ZERO);
+            if (b.getMonthlyLimit() != null && spent.compareTo(b.getMonthlyLimit()) > 0) {
+                underBudget = false;
+                break;
+            }
+        }
+
+        if (underBudget) {
+            userProfileRepository.findByUserId(user.getId()).ifPresent(profile -> {
+                int rewardAmount = 50;
+                profile.setPennies(profile.getPennies() + rewardAmount);
+                userProfileRepository.save(profile);
+            });
+            redirectAttributes.addFlashAttribute("successMessage", "Congratulations! You stayed under budget and earned bonus pennies!");
+        } else {
+            redirectAttributes.addFlashAttribute("errorMessage", "Budget goals not met for month-end rewards.");
+        }
+
+        return "redirect:/budget";
+    }
+
     @PostMapping("/delete/{id}")
     public String deleteBudget(@AuthenticationPrincipal UserDetails userDetails,
                                @PathVariable Long id) {

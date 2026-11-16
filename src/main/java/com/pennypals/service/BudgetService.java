@@ -57,5 +57,28 @@ public class BudgetService {
         }
     }
 
+    /**
+     * Scheduled month-end evaluation task (Runs at midnight on the last day of every month).
+     * Rewards users with 50 bonus pennies if they stayed under their monthly spending limits.
+     */
+    @Scheduled(cron = "0 0 0 L * ?")
+    @Transactional
+    public void evaluateMonthEndBudgets() {
+        List<Budget> allBudgets = budgetRepository.findAll();
 
+        for (Budget budget : allBudgets) {
+            if (budget.getUser() != null && "SPENDING_LIMIT".equals(budget.getType()) && !Boolean.TRUE.equals(budget.getIsCompleted())) {
+                if (budget.getCurrentProgress().compareTo(budget.getMonthlyLimit()) <= 0) {
+                    budget.setIsCompleted(true);
+                    budgetRepository.save(budget);
+
+                    UserProfile profile = userProfileRepository.findByUserId(budget.getUser().getId()).orElse(null);
+                    if (profile != null) {
+                        profile.setPennies(profile.getPennies() + 50);
+                        userProfileRepository.save(profile);
+                    }
+                }
+            }
+        }
+    }
 }
