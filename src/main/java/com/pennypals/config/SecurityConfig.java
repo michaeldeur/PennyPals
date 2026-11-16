@@ -9,7 +9,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -28,9 +27,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityContext(context -> context
-                        .securityContextRepository(new HttpSessionSecurityContextRepository())
-                )
+                .csrf(csrf -> csrf.disable()) // Optional: Enable/disable based on form submission preferences
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/register", "/login", "/forgot-password/**", "/css/**", "/js/**", "/images/**").permitAll()
                         .anyRequest().authenticated()

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -34,7 +35,8 @@ public class AuthController {
             RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
-            String errorMsg = bindingResult.getAllErrors().get(0).getDefaultMessage();
+            // Grab the first validation error message to show the user
+            String errorMsg = bindingResult.getAllErrors().getFirst().getDefaultMessage();
             redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
             return "redirect:/?registerError";
         }
@@ -46,6 +48,7 @@ public class AuthController {
             // Register user and provision their starting pennies profile
             userService.registerUser(registrationDto);
 
+            // Automatically authenticate the new user session
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(registrationDto.getUsername(), rawPassword)
             );
@@ -62,5 +65,44 @@ public class AuthController {
         }
 
         return "redirect:/aquarium";
+    }
+
+    @PostMapping("/forgot-password/fetch-question")
+    public String fetchSecurityQuestion(@RequestParam("email") String email, RedirectAttributes redirectAttributes) {
+        try {
+            com.pennypals.model.User user = userService.findByEmail(email);
+            String questionText = userService.getSecurityQuestionText(user.getSecurityQuestion());
+
+            redirectAttributes.addFlashAttribute("securityQuestion", questionText);
+
+            return "redirect:/?resetStep2&email=" + java.net.URLEncoder.encode(email, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Email address not found.");
+            return "redirect:/?resetErrorStep1";
+        }
+    }
+
+    @PostMapping("/forgot-password/reset")
+    public String resetPassword(@RequestParam("email") String email,
+                                @RequestParam("securityAnswer") String securityAnswer,
+                                @RequestParam("newPassword") String newPassword,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            userService.resetPassword(email, securityAnswer, newPassword);
+            redirectAttributes.addFlashAttribute("successMessage", "Password successfully reset! Please sign in with your new password.");
+            return "redirect:/?resetSuccess";
+        } catch (IllegalArgumentException e) {
+            try {
+                com.pennypals.model.User user = userService.findByEmail(email);
+                String questionText = userService.getSecurityQuestionText(user.getSecurityQuestion());
+                redirectAttributes.addFlashAttribute("securityQuestion", questionText);
+            } catch (Exception ex) {
+                // fallback if user lookup fails during error handling
+            }
+
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            redirectAttributes.addFlashAttribute("email", email);
+            return "redirect:/?resetErrorStep2";
+        }
     }
 }

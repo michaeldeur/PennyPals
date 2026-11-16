@@ -50,12 +50,6 @@ public class DashboardController {
         return "aquarium";
     }
 
-    @GetMapping("/budget")
-    public String budgetPage(Principal principal, Model model) {
-        addProfileToModel(principal, model);
-        return "budget";
-    }
-
     @GetMapping("/shop")
     public String shopPage(Principal principal, Model model) {
         addProfileToModel(principal, model);

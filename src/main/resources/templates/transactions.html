@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,12 +11,14 @@
         html, body {
             height: 100%;
             margin: 0;
+            overflow: hidden;
         }
         body {
             display: flex;
             flex-direction: column;
             background-color: #ffffff;
         }
+
         .custom-header, .custom-footer {
             background-color: #87CEEB;
             color: #000000;
@@ -31,6 +33,12 @@
             border-bottom: 1px solid #71bce0;
             padding: 0.4rem 0;
             flex-shrink: 0;
+        }
+        .nav-bar-strip .container-fluid {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
         }
         .nav-bar-strip a {
             color: #0d6efd;
@@ -66,6 +74,8 @@
             align-items: center;
             width: 100%;
             padding: 2rem 1rem;
+            overflow-y: auto;
+            box-sizing: border-box;
         }
         .content-wrapper {
             display: flex;
@@ -108,10 +118,15 @@
                 justify-content: center;
             }
             .nav-bar-strip .container-fluid {
-                justify-content: center !important;
-                gap: 0.25rem 0.5rem;
+                justify-content: flex-start !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
             }
             .nav-bar-strip a {
+                white-space: nowrap;
                 padding: 0.25rem 0.5rem;
                 font-size: 0.85rem;
             }
@@ -122,7 +137,6 @@
     </style>
 </head>
 <body>
-
 
 <!-- Header Section -->
 <header class="custom-header py-3 px-4 shadow-sm">
@@ -142,10 +156,9 @@
     </div>
 </header>
 
-
 <!-- Navigation Bar Strip -->
 <nav class="nav-bar-strip">
-    <div class="container-fluid d-flex justify-content-around align-items-center flex-wrap">
+    <div class="container-fluid">
         <a th:href="@{/aquarium}">Aquarium</a>
         <a th:href="@{/shop}">Shop</a>
         <a th:href="@{/quests}">Quests</a>
@@ -155,11 +168,9 @@
     </div>
 </nav>
 
-
 <!-- Main Content Area -->
 <main class="main-container">
     <div class="content-wrapper">
-
 
         <!-- Flash Banners -->
         <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show w-100" role="alert">
@@ -171,18 +182,15 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-
         <!-- Centered Transactions Page Title -->
         <h2 class="page-title">Transactions</h2>
-
 
         <!-- Days Left in Monthly Budget Header -->
         <div class="days-left-header">
             Days Left In Monthly Budget: <span th:text="${daysLeft != null ? daysLeft : '21'}">21</span> days
         </div>
 
-
-        <!-- Stretch Goal Search & Filtering Control Card -->
+        <!-- Search & Filtering Control Card -->
         <div class="card bg-light border-secondary mb-4 w-100 p-3">
             <form method="get" th:action="@{/transactions}" class="row g-2 align-items-end">
                 <div class="col-md-3">
@@ -201,17 +209,9 @@
                     <label class="form-label small fw-bold mb-1">Category</label>
                     <select class="form-select form-select-sm" name="category">
                         <option value="ALL" th:selected="${selectedCategory == 'ALL'}">All Categories</option>
-                        <option value="Income" th:selected="${selectedCategory == 'Income'}">Income</option>
-                        <option value="Giving" th:selected="${selectedCategory == 'Giving'}">Giving</option>
-                        <option value="Savings" th:selected="${selectedCategory == 'Savings'}">Savings</option>
-                        <option value="Housing" th:selected="${selectedCategory == 'Housing'}">Housing</option>
-                        <option value="Transportation" th:selected="${selectedCategory == 'Transportation'}">Transportation</option>
-                        <option value="Food" th:selected="${selectedCategory == 'Food'}">Food</option>
-                        <option value="Personal" th:selected="${selectedCategory == 'Personal'}">Personal</option>
-                        <option value="Lifestyle" th:selected="${selectedCategory == 'Lifestyle'}">Lifestyle</option>
-                        <option value="Health" th:selected="${selectedCategory == 'Health'}">Health</option>
-                        <option value="Insurance" th:selected="${selectedCategory == 'Insurance'}">Insurance</option>
-                        <option value="Non-mortgage Debts" th:selected="${selectedCategory == 'Non-mortgage Debts'}">Non-mortgage Debts</option>
+                        <th:block th:if="${budgets != null}">
+                            <option th:each="b : ${budgets}" th:value="${b.category}" th:text="${b.category}" th:selected="${selectedCategory == b.category}">Food</option>
+                        </th:block>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -237,8 +237,7 @@
             </form>
         </div>
 
-
-        <!-- Merged Transactions Table Card with Default $100 Budgeted Column -->
+        <!-- Merged Transactions Table Card with Dynamic Budgeted Limit Column -->
         <div class="transactions-card">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -265,24 +264,21 @@
                         </td>
                         <td class="text-muted small" th:text="${tx.notes != null && !tx.notes.isBlank() ? tx.notes : '-'}">Grocery run</td>
 
-
+                        <!-- Safe O(1) Map Lookups for Spent / Budgeted Limit -->
                         <td class="text-end text-muted small fw-medium">
                             <span th:if="${tx.category == 'Income'}">N/A</span>
                             <span th:unless="${tx.category == 'Income'}"
-                                  th:text="${'$' + (#numbers.formatDecimal((categorySpentMap != null && categorySpentMap[tx.category] != null ? categorySpentMap[tx.category] : 0), 1, 2)) + ' / $100.00'}">$0.00 / $100.00
+                                  th:text="${'$' + (#numbers.formatDecimal((categorySpentMap != null && categorySpentMap[tx.category] != null ? categorySpentMap[tx.category] : 0), 1, 2)) + ' / $' + (#numbers.formatDecimal((categoryLimitMap != null && categoryLimitMap[tx.category] != null ? categoryLimitMap[tx.category] : 0), 1, 2))}">$0.00 / $0.00
                             </span>
                         </td>
-
 
                         <td class="text-end fw-bold"
                             th:classappend="${tx.type == 'INCOME' ? 'text-success' : 'text-dark'}"
                             th:text="${(tx.type == 'INCOME' ? '+' : '-') + '$' + #numbers.formatDecimal(tx.amount, 1, 2)}">$0.00</td>
                         <td class="text-end">
-                            <!-- Inline Row Update Trigger Modal -->
                             <button class="btn btn-sm btn-outline-secondary py-0 px-1 me-1" data-bs-toggle="modal" th:data-bs-target="${'#editModal' + tx.id}" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <!-- Delete Modal Trigger Button -->
                             <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1" title="Delete"
                                     data-bs-toggle="modal" th:data-bs-target="${'#deleteModal' + tx.id}">
                                 <i class="bi bi-trash"></i>
@@ -290,10 +286,9 @@
                         </td>
                     </tr>
 
-
                     <!-- Empty List State -->
                     <tr th:if="${transactions == null || transactions.isEmpty()}">
-                        <td colspan="6" class="text-center py-4 text-muted">
+                        <td colspan="7" class="text-center py-4 text-muted">
                             <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                             No transactions recorded yet.
                         </td>
@@ -305,8 +300,7 @@
     </div>
 </main>
 
-
-<!-- Inline Row Update Modals (Rendered dynamically per transaction) -->
+<!-- Inline Row Update Modals with Defensive Category Handling -->
 <div th:each="tx : ${transactions}">
     <div class="modal fade" th:id="${'editModal' + tx.id}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -327,18 +321,12 @@
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Category</label>
                             <select class="form-select" name="category" required>
-                                <option value="" disabled>Select</option>
-                                <option value="Income" th:selected="${tx.category == 'Income'}">Income</option>
-                                <option value="Giving" th:selected="${tx.category == 'Giving'}">Giving</option>
-                                <option value="Savings" th:selected="${tx.category == 'Savings'}">Savings</option>
-                                <option value="Housing" th:selected="${tx.category == 'Housing'}">Housing</option>
-                                <option value="Transportation" th:selected="${tx.category == 'Transportation'}">Transportation</option>
-                                <option value="Food" th:selected="${tx.category == 'Food'}">Food</option>
-                                <option value="Personal" th:selected="${tx.category == 'Personal'}">Personal</option>
-                                <option value="Lifestyle" th:selected="${tx.category == 'Lifestyle'}">Lifestyle</option>
-                                <option value="Health" th:selected="${tx.category == 'Health'}">Health</option>
-                                <option value="Insurance" th:selected="${tx.category == 'Insurance'}">Insurance</option>
-                                <option value="Non-mortgage Debts" th:selected="${tx.category == 'Non-mortgage Debts'}">Non-mortgage Debts</option>
+                                <option th:value="${tx.category}" th:text="${tx.category}" selected>Current Category</option>
+                                <th:block th:if="${budgets != null}">
+                                    <th:block th:each="b : ${budgets}">
+                                        <option th:unless="${b.category == tx.category}" th:value="${b.category}" th:text="${b.category}">Food</option>
+                                    </th:block>
+                                </th:block>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -360,8 +348,7 @@
     </div>
 </div>
 
-
-<!-- Delete Confirmation Modals (Rendered dynamically per transaction) -->
+<!-- Delete Confirmation Modals -->
 <div th:each="tx : ${transactions}">
     <div class="modal fade" th:id="${'deleteModal' + tx.id}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">

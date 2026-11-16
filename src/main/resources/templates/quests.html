@@ -10,6 +10,7 @@
         html, body {
             height: 100%;
             margin: 0;
+            overflow: hidden; /* Locks the outer window from scrolling; inner container handles scroll */
         }
         body {
             display: flex;
@@ -59,13 +60,17 @@
             font-size: 0.95rem;
             cursor: pointer;
         }
+
+        /* Main container is now the scrollable viewport sandwiched between fixed header/nav and footer */
         .main-container {
             flex: 1;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             width: 100%;
             padding: 2rem;
+            overflow-y: auto; /* Allows only the main content to scroll */
+            box-sizing: border-box;
         }
 
         /* Flex wrapper to align title to the left of the centered card on desktop */
@@ -173,7 +178,7 @@
     </div>
 </nav>
 
-<!-- Main Content Area -->
+<!-- Main Content Area (Scrolls independently between the locked header/nav and footer) -->
 <main class="main-container">
     <div class="content-wrapper">
         <!-- Top-left aligned header matching project design standards -->

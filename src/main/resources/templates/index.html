@@ -118,7 +118,6 @@
     <div class="auth-card">
 
         <!-- Notification Alert Banners -->
-        <!-- Existing Alerts -->
         <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
             <strong>Login Failed:</strong> Invalid username or password.
             <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -134,7 +133,7 @@
             <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <!-- NEW: Password Reset Success / Error Banners -->
+        <!-- Password Reset Success / Error Banners -->
         <div th:if="${param.resetSuccess}" class="alert alert-success alert-dismissible fade show py-2 mb-3 small" role="alert">
             <strong>Success!</strong> Password reset successfully. Please sign in.
             <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -160,6 +159,7 @@
         <div id="loginSection">
             <h3 class="mb-4 fw-normal">Sign In</h3>
             <form th:action="@{/login}" method="post">
+                <input type="hidden" th:name="${_csrf?.parameterName}" th:value="${_csrf?.token}"/>
                 <div class="mb-3">
                     <input type="text" class="form-control" name="username" placeholder="Username or Email" required>
                 </div>
@@ -182,7 +182,7 @@
         <div id="registerSection" style="display: none;">
             <h3 class="mb-4 fw-normal">Create Account</h3>
             <form th:action="@{/register}" th:object="${registrationDto}" method="post">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" th:name="${_csrf?.parameterName}" th:value="${_csrf?.token}"/>
                 <div class="mb-3">
                     <input type="text" class="form-control" th:field="*{username}" placeholder="Choose Username" required>
                 </div>
@@ -221,6 +221,7 @@
             <h3 class="mb-4 fw-normal">Reset Password</h3>
             <p class="text-muted small mb-3">Enter your email address to fetch your security question.</p>
             <form th:action="@{/forgot-password/fetch-question}" method="post">
+                <input type="hidden" th:name="${_csrf?.parameterName}" th:value="${_csrf?.token}"/>
                 <div class="mb-4">
                     <input type="email" class="form-control" name="email" placeholder="Email Address" required>
                 </div>
@@ -239,6 +240,7 @@
             <p class="text-muted small mb-2">Please answer your security question below:</p>
 
             <form th:action="@{/forgot-password/reset}" method="post">
+                <input type="hidden" th:name="${_csrf?.parameterName}" th:value="${_csrf?.token}"/>
                 <!-- Populated automatically by JS from query params -->
                 <input type="hidden" name="email" id="resetEmailInput">
 
@@ -287,17 +289,16 @@
         // Always grab email from query params if present
         if (urlParams.has('email')) {
             const emailVal = urlParams.get('email');
-            document.getElementById('resetEmailInput').value = emailVal;
-            // Also store it on error retry if needed
-            const errorEmailInput = document.getElementById('resetEmailErrorInput');
-            if (errorEmailInput) errorEmailInput.value = emailVal;
+            const emailInput = document.getElementById('resetEmailInput');
+            if (emailInput) emailInput.value = emailVal;
         }
 
+        // Switch to appropriate view based on query parameters
         if (urlParams.has('registerError')) {
             switchView('registerSection');
         } else if (urlParams.has('resetErrorStep1')) {
             switchView('resetStep1');
-        } else if (urlParams.has('resetErrorStep2') || urlParams.has('resetStep2')) {
+        } else if (urlParams.has('resetErrorStep2') || urlParams.has('resetStep2') || (urlParams.has('email') && document.getElementById('resetEmailInput').value)) {
             switchView('resetStep2');
         }
     });
