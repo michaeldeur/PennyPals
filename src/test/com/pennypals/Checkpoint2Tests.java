@@ -47,7 +47,8 @@ class Checkpoint2Tests {
         var transactions = transactionRepository.findByUserId(user.getId());
         assertThat(transactions).hasSize(2);
 
-        var budgets = budgetRepository.findByUserId(user.getId());
+        // Updated to use findByUser(user)
+        var budgets = budgetRepository.findByUser(user);
         assertThat(budgets).hasSize(1);
 
         var items = unlockedItemRepository.findByUserId(user.getId());
@@ -107,7 +108,8 @@ class Checkpoint2Tests {
         Budget savedBudget = budgetRepository.save(newBudget);
         assertThat(savedBudget.getId()).isNotNull();
 
-        var budgets = budgetRepository.findByUserId(user.getId());
+        // Updated to use findByUser(user)
+        var budgets = budgetRepository.findByUser(user);
         assertThat(budgets).hasSize(2);
     }
 
@@ -171,7 +173,8 @@ class Checkpoint2Tests {
     @Transactional
     void test8_UpdateBudgetProgress() {
         User user = userRepository.findByUsername("demo_user").orElseThrow();
-        var budgets = budgetRepository.findByUserId(user.getId());
+        // Updated to use findByUser(user)
+        var budgets = budgetRepository.findByUser(user);
         Budget foodBudget = budgets.get(0);
 
         foodBudget.setCurrentProgress(new BigDecimal("150.00"));
