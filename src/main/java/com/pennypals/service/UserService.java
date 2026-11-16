@@ -3,6 +3,8 @@ package com.pennypals.service;
 import com.pennypals.dto.UserRegistrationDto;
 import com.pennypals.model.User;
 import com.pennypals.model.UserProfile;
+import com.pennypals.model.UnlockedItem;
+import com.pennypals.repository.UnlockedItemRepository;
 import com.pennypals.repository.UserProfileRepository;
 import com.pennypals.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,11 +21,16 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
+    private final UnlockedItemRepository unlockedItemRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, UserProfileRepository userProfileRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository,
+                       UserProfileRepository userProfileRepository,
+                       UnlockedItemRepository unlockedItemRepository,
+                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
+        this.unlockedItemRepository = unlockedItemRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -80,6 +87,29 @@ public class UserService implements UserDetailsService {
         profile.setPennies(100);
         profile.setUpdatedAt(LocalDateTime.now());
         userProfileRepository.save(profile);
+
+        /// Seed default starter aquarium items: 1 fish and 1 decoration (auto-purchased and auto-equipped)
+        UnlockedItem defaultFish = new UnlockedItem();
+        defaultFish.setUser(savedUser);
+        defaultFish.setItemName("Ocellaris Clownfish");
+        defaultFish.setItemType("fish");
+        defaultFish.setColorHex("#ff4500");
+        defaultFish.setCurrencyType("Pennies");
+        defaultFish.setCost(0);
+        defaultFish.setIsPurchased(true);
+        defaultFish.setIsEquipped(true);
+        unlockedItemRepository.save(defaultFish);
+
+        UnlockedItem defaultDecor = new UnlockedItem();
+        defaultDecor.setUser(savedUser);
+        defaultDecor.setItemName("Sunken Treasure Chest");
+        defaultDecor.setItemType("decor");
+        defaultDecor.setColorHex("#8b4513");
+        defaultDecor.setCurrencyType("Pennies");
+        defaultDecor.setCost(0);
+        defaultDecor.setIsPurchased(true);
+        defaultDecor.setIsEquipped(true);
+        unlockedItemRepository.save(defaultDecor);
 
         return savedUser;
     }

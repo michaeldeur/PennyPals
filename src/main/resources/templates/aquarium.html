@@ -6,15 +6,17 @@
     <title>Penny Pals - Aquarium</title>
     <!-- Bootstrap 5 CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         html, body {
-            height: 100%;
+            height: 100vh;
             margin: 0;
+            overflow: hidden; /* Locks out page scrollbars */
         }
         body {
             display: flex;
             flex-direction: column;
-            background-color: #ffffff; /* Soft aquarium water background */
+            background-color: #ffffff;
         }
         .custom-header, .custom-footer {
             background-color: #87CEEB;
@@ -62,21 +64,47 @@
         .main-container {
             flex: 1;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+            flex-direction: column;
             width: 100%;
-            padding: 2rem;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            min-height: 0;
         }
-        .dashboard-card {
-            border: 1px solid #ced4da;
-            border-radius: 12px;
-            padding: 2.5rem;
-            background-color: #ffffff;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
             width: 100%;
-            max-width: 500px;
-            text-align: center;
+            height: 100%;
+            min-height: 0;
+            position: relative; /* Context for absolute floating overlay */
+        }
+        /* Floating Tutorial Guide Overlay on top of Canvas */
+        .floating-guide-container {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 10;
+        }
+        .aquarium-card {
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            background-color: #c6f0ff;
+            flex: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-sizing: border-box;
+            min-height: 0;
+            position: relative;
+        }
+        canvas {
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 50%, #0f2027 100%);
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         /* Mobile Responsiveness for Header & Nav */
@@ -97,15 +125,16 @@
                 padding: 0.25rem 0.5rem;
                 font-size: 0.85rem;
             }
-            .transactions-card {
-                padding: 1rem 0.5rem;
+            .floating-guide-container {
+                top: 10px;
+                right: 10px;
             }
         }
     </style>
 </head>
 <body>
 
-<!-- Header Section (Matched height & color with index.html) -->
+<!-- Header Section -->
 <header class="custom-header py-3 px-4 shadow-sm">
     <div class="container-fluid d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center">
@@ -137,18 +166,271 @@
 
 <!-- Main Content Area -->
 <main class="main-container">
-    <div class="dashboard-card">
-        <h3 class="text-success mb-2">🌊 Interactive Aquarium Dashboard</h3>
-        <p class="text-muted small mb-0">Canvas rendering engine and fish/decor states will load here in Checkpoint 5.</p>
+    <div class="content-wrapper">
+
+        <!-- Floating Tutorial Button Overlay -->
+        <div class="floating-guide-container">
+            <button class="btn btn-light btn-sm fw-bold shadow border text-primary py-1 px-3 rounded-pill" data-bs-toggle="modal" data-bs-target="#tutorialModal">
+                <i class="bi bi-info-circle-fill"></i> Guide & Instructions
+            </button>
+        </div>
+
+        <!-- Full-Screen Edge-to-Edge Canvas Aquarium Card -->
+        <div class="aquarium-card">
+            <canvas id="aquariumCanvas"></canvas>
+        </div>
+
     </div>
 </main>
 
-<!-- Footer Section (Matched height & color with index.html) -->
+<!-- Quick-Start Tutorial Instruction Modal -->
+<div class="modal fade" id="tutorialModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold text-primary"><i class="bi bi-water"></i> Aquarium Quick-Start Guide</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-secondary small mb-3">Welcome to your interactive virtual aquarium! Here is how you can customize and manage your tank:</p>
+                <ul class="small text-muted ps-3 mb-0">
+                    <li class="mb-2"><strong>Earn Reward Pennies:</strong> Log transactions, maintain your budget, and complete daily quests to earn pennies.</li>
+                    <li class="mb-2"><strong>Shop for Items:</strong> Visit the <strong>Shop</strong> page to purchase unique fish species, flora, and intricate decor items.</li>
+                    <li class="mb-2"><strong>Live Swimming Engine:</strong> Click anywhere on the water to feed pellets. Equipped items populate your canvas tank in real-time.</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary btn-sm px-4" data-bs-dismiss="modal">Got it!</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer Section -->
 <footer class="custom-header text-center py-3">
     <p class="mb-0 text-dark">&copy; 2026 Penny Pals</p>
 </footer>
 
 <!-- Bootstrap JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- HTML5 Canvas Responsive Aquarium Animation Engine Script -->
+<script type="module">
+    import { DetailedFish } from './js/fishEntities.js';
+    import { Bubble } from './js/bubbleEntities.js';
+    import { FoodPellet } from './js/foodPelletEntities.js';
+    import { userOrderedSlots, renderDecorSlot } from './js/decorEntities.js';
+    import { equippedFlora, renderFloraEntity } from './js/floraEntities.js';
+
+    const canvas = document.getElementById('aquariumCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let fishes = [];
+    let activeDecor = [];
+    let foods = [];
+    let bubbles = [];
+    let lightRays = [];
+
+    // Fallback default species configuration lookup map if DB returns generic type strings
+    const speciesConfigMap = {
+        'angel': { type: 'angel', size: 30, color1: '#ffcc00', color2: '#0066ff', maxSpeed: 1.6 },
+        'shark': { type: 'shark', size: 42, color1: '#708090', color2: '#2f4f4f', maxSpeed: 2.1 },
+        'puffer': { type: 'puffer', size: 26, color1: '#8b4513', color2: '#d2b48c', maxSpeed: 1.1 },
+        'clownfish': { type: 'clownfish', size: 24, color1: '#ff4500', color2: '#ffffff', maxSpeed: 1.4 },
+        'tang': { type: 'tang', size: 32, color1: '#1e90ff', color2: '#ffd700', maxSpeed: 1.8 },
+        'koi': { type: 'koi', size: 35, color1: '#ffffff', color2: '#dc143c', maxSpeed: 1.3 },
+        'idol': { type: 'idol', size: 28, color1: '#111111', color2: '#ffd700', maxSpeed: 1.2 }
+    };
+
+    function resizeCanvas() {
+        let oldWidth = canvas.width;
+        let oldHeight = canvas.height;
+
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+
+        if (oldWidth > 0 && oldHeight > 0 && fishes.length > 0) {
+            fishes.forEach(fish => {
+                if (fish.x > canvas.width - 60) fish.x = canvas.width - 80;
+                if (fish.y > canvas.height - 80) fish.y = canvas.height - 120;
+            });
+        }
+        // Re-initialize environment light rays to match new width uniformly
+        initEnvironment();
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function initEnvironment() {
+        bubbles = [];
+        for (let i = 0; i < 25; i++) {
+            bubbles.push(new Bubble(canvas.width, canvas.height));
+        }
+
+        // Uniform light rays configuration
+        lightRays = [];
+        const rayCount = 5;
+        const spacing = canvas.width / rayCount;
+        for (let i = 0; i < rayCount; i++) {
+            lightRays.push({
+                x: spacing * i + spacing * 0.1,
+                width: 90,
+                opacity: 0.14
+            });
+        }
+    }
+
+    function drawCausticsAndRays() {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        lightRays.forEach(ray => {
+            const grad = ctx.createLinearGradient(ray.x, 0, ray.x + ray.width, canvas.height);
+            grad.addColorStop(0, `rgba(255, 255, 255, ${ray.opacity})`);
+            grad.addColorStop(0.4, `rgba(200, 230, 255, ${ray.opacity * 0.6})`);
+            grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.moveTo(ray.x, 0);
+            ctx.lineTo(ray.x + ray.width, 0);
+            // Uniform angle slant at the bottom
+            ctx.lineTo(ray.x + ray.width + 100, canvas.height);
+            ctx.lineTo(ray.x + 100, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+        });
+        ctx.restore();
+    }
+
+    function drawAquariumScene(time) {
+        const floorHeight = 45;
+        const floorY = canvas.height - floorHeight;
+
+        ctx.fillStyle = '#6b4423';
+        ctx.fillRect(0, floorY, canvas.width, floorHeight);
+
+        ctx.fillStyle = '#8c5a2b';
+        ctx.fillRect(0, floorY, canvas.width, 10);
+
+        equippedFlora.forEach(flora => {
+            renderFloraEntity(ctx, flora, floorY);
+        });
+
+        const slotsToRender = (activeDecor.length > 0) ? activeDecor : userOrderedSlots.slice(0, 1);
+        slotsToRender.forEach(slot => {
+            renderDecorSlot(ctx, slot, floorY);
+        });
+    }
+
+    // FETCH EQUIPPED ITEMS DYNAMICALLY FROM DATABASE AND SEPARATE FISH VS DECOR
+    async function initAquarium() {
+        initEnvironment();
+        try {
+            const response = await fetch('/api/aquarium/equipped');
+            if (response.ok) {
+                const equippedItems = await response.json();
+                if (equippedItems && equippedItems.length > 0) {
+                    const dbFishList = equippedItems.filter(item => item.itemType && item.itemType.toLowerCase() === 'fish');
+
+                    if (dbFishList.length > 0) {
+                        fishes = dbFishList.map(item => {
+                            const baseConfig = speciesConfigMap[item.itemId] || speciesConfigMap[item.itemType] || speciesConfigMap['clownfish'];
+                            return new DetailedFish({
+                                ...baseConfig,
+                                name: item.itemName || baseConfig.name
+                            }, canvas.width, canvas.height);
+                        });
+                    } else {
+                        fishes = [new DetailedFish(speciesConfigMap['clownfish'], canvas.width, canvas.height)];
+                    }
+
+                    const dbDecorList = equippedItems.filter(item => item.itemType && (item.itemType.toLowerCase() === 'decor' || item.itemType.toLowerCase() === 'decoration'));
+                    if (dbDecorList.length > 0 && userOrderedSlots.length > 0) {
+                        activeDecor = dbDecorList.slice(0, 1).map((decor, index) => ({
+                            ...userOrderedSlots[index],
+                            type: decor.itemId || decor.itemName,
+                            name: decor.itemName,
+                            itemName: decor.itemName,
+                            colorHex: decor.colorHex
+                        }));
+                    } else {
+                        activeDecor = [];
+                    }
+                } else {
+                    fishes = [new DetailedFish(speciesConfigMap['clownfish'], canvas.width, canvas.height)];
+                    activeDecor = [];
+                }
+            } else {
+                fishes = [new DetailedFish(speciesConfigMap['clownfish'], canvas.width, canvas.height)];
+                activeDecor = [];
+            }
+        } catch (error) {
+            console.error("Failed to load equipped items from database, using fallback:", error);
+            fishes = [new DetailedFish(speciesConfigMap['clownfish'], canvas.width, canvas.height)];
+            activeDecor = [];
+        }
+    }
+
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        for (let i = 0; i < 3; i++) {
+            foods.push(new FoodPellet(x + (Math.random() - 0.5) * 15, y + (Math.random() - 0.5) * 15));
+        }
+    });
+
+    function checkFishFoodCollisions() {
+        for (let i = fishes.length - 1; i >= 0; i--) {
+            const fish = fishes[i];
+            for (let j = foods.length - 1; j >= 0; j--) {
+                const food = foods[j];
+                const dx = fish.x - food.x;
+                const dy = fish.y - food.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < fish.size * 0.8 + food.size) {
+                    foods.splice(j, 1);
+                    fish.speedX *= 1.4;
+                    fish.speedY *= 1.4;
+                    break;
+                }
+            }
+        }
+    }
+
+    function animate(timestamp) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        drawCausticsAndRays();
+        drawAquariumScene(timestamp);
+
+        bubbles.forEach(b => {
+            b.update(canvas.width, canvas.height);
+            b.draw(ctx);
+        });
+
+        foods = foods.filter(f => !f.isExpired());
+        foods.forEach(f => {
+            f.update(canvas.height);
+            f.draw(ctx);
+        });
+
+        fishes.forEach(fish => {
+            fish.update(canvas.width, canvas.height, foods);
+            fish.draw(ctx);
+        });
+
+        checkFishFoodCollisions();
+
+        requestAnimationFrame(animate);
+    }
+
+    // Initialize and start render loop
+    initAquarium().then(() => {
+        requestAnimationFrame(animate);
+    });
+</script>
 </body>
 </html>
