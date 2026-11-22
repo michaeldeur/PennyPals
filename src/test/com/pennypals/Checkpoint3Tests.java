@@ -9,6 +9,7 @@ import com.pennypals.repository.UserProfileRepository;
 import com.pennypals.repository.UserRepository;
 import com.pennypals.service.TransactionService;
 import com.pennypals.service.UserService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -59,7 +60,6 @@ public class Checkpoint3Tests {
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    // Helper method to register users via UserRegistrationDto
     private User registerHelper(String username, String email) {
         UserRegistrationDto dto = new UserRegistrationDto();
         dto.setUsername(username);
@@ -71,7 +71,8 @@ public class Checkpoint3Tests {
     }
 
     @Test
-    public void testUserRegistrationAndHashing() {
+    @DisplayName("1. Test User Registration and Password Hashing")
+    public void test1_UserRegistrationAndHashing() {
         UserRegistrationDto dto = new UserRegistrationDto();
         dto.setUsername("secureuser");
         dto.setPassword("rawPassword123");
@@ -90,7 +91,8 @@ public class Checkpoint3Tests {
     }
 
     @Test
-    public void testDuplicateRegistrationRejection() {
+    @DisplayName("2. Test Duplicate Registration Rejection")
+    public void test2_DuplicateRegistrationRejection() {
         registerHelper("existinguser", "unique@test.com");
 
         UserRegistrationDto duplicateDto = new UserRegistrationDto();
@@ -105,7 +107,8 @@ public class Checkpoint3Tests {
     }
 
     @Test
-    public void testUserAuthenticationFlow() {
+    @DisplayName("3. Test User Authentication Flow")
+    public void test3_UserAuthenticationFlow() {
         registerHelper("authuser", "auth@test.com");
 
         Authentication auth = authenticationManager.authenticate(
@@ -117,18 +120,18 @@ public class Checkpoint3Tests {
     }
 
     @Test
-    public void testUnauthenticatedAccessControl() throws Exception {
-        // Public landing page is accessible without login
+    @DisplayName("4. Test Unauthenticated Access Control")
+    public void test4_UnauthenticatedAccessControl() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk());
 
-        // Aquarium requires authentication; unauthenticated requests should redirect
         mockMvc.perform(get("/aquarium"))
                 .andExpect(status().is3xxRedirection());
     }
 
     @Test
-    public void testCurrencyRewardCalculation() {
+    @DisplayName("5. Test Currency Reward Calculation on Transaction")
+    public void test5_CurrencyRewardCalculation() {
         User user = registerHelper("rewarduser", "reward@test.com");
         UserProfile profile = userProfileRepository.findByUserId(user.getId()).orElseThrow();
         int initialPennies = profile.getPennies();
@@ -146,7 +149,8 @@ public class Checkpoint3Tests {
     }
 
     @Test
-    public void testUserOwnershipIsolation() {
+    @DisplayName("6. Test User Ownership Isolation on Transactions")
+    public void test6_UserOwnershipIsolation() {
         User user1 = registerHelper("user1", "user1@test.com");
         User user2 = registerHelper("user2", "user2@test.com");
 
@@ -163,50 +167,51 @@ public class Checkpoint3Tests {
     }
 
     @Test
-    @WithMockUser(username = "testuser")
-    public void testSecurityPermissionsAccess() throws Exception {
-        // Public landing page is accessible
+    @WithMockUser(username = "testuser", roles = {"USER"})
+    @DisplayName("7. Test Security Permissions Access")
+    public void test7_SecurityPermissionsAccess() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk());
 
-        // Secured aquarium page is accessible when authenticated
         mockMvc.perform(get("/aquarium"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(username = "valuser")
-    public void testFormValidationEnforcement() throws Exception {
+    @WithMockUser(username = "valuser", roles = {"USER"})
+    @DisplayName("8. Test Form Validation Enforcement on Empty Amount")
+    public void test8_FormValidationEnforcement() throws Exception {
         registerHelper("valuser", "val@test.com");
 
-        // Submitting an invalid transaction with CSRF token included
         mockMvc.perform(post("/add-transaction")
                         .with(csrf())
                         .param("type", "EXPENSE")
                         .param("category", "Food")
-                        .param("amount", "") // invalid empty amount
+                        .param("amount", "")
                         .param("date", LocalDate.now().toString()))
                 .andExpect(status().isOk())
                 .andExpect(model().hasErrors());
     }
 
     @Test
-    @WithMockUser(username = "formatuser")
-    public void testInvalidAmountFormattingRejection() throws Exception {
+    @WithMockUser(username = "formatuser", roles = {"USER"})
+    @DisplayName("9. Test Invalid Amount Formatting Rejection")
+    public void test9_InvalidAmountFormattingRejection() throws Exception {
         registerHelper("formatuser", "format@test.com");
 
         mockMvc.perform(post("/add-transaction")
                         .with(csrf())
                         .param("type", "INCOME")
                         .param("category", "Gift")
-                        .param("amount", "not-a-number") // invalid number format
+                        .param("amount", "not-a-number")
                         .param("date", LocalDate.now().toString()))
                 .andExpect(status().isOk())
                 .andExpect(model().hasErrors());
     }
 
     @Test
-    public void testPasswordResetVerificationFlow() {
+    @DisplayName("10. Test Password Reset Verification Flow")
+    public void test10_PasswordResetVerificationFlow() {
         UserRegistrationDto dto = new UserRegistrationDto();
         dto.setUsername("resetuser");
         dto.setPassword("oldPassword123");
@@ -215,10 +220,8 @@ public class Checkpoint3Tests {
         dto.setSecurityAnswer("rover");
         userService.registerUser(dto);
 
-        // Reset password with correct normalized security answer
         assertDoesNotThrow(() -> userService.resetPassword("reset@test.com", "ROVER", "newPassword456"));
 
-        // Verify authentication succeeds with the new password
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken("resetuser", "newPassword456")
         );

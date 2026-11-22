@@ -7,11 +7,15 @@ import com.pennypals.repository.BudgetRepository;
 import com.pennypals.repository.TransactionRepository;
 import com.pennypals.repository.UnlockedItemRepository;
 import com.pennypals.repository.UserProfileRepository;
+import com.pennypals.repository.UserRepository;
 import com.pennypals.service.TransactionService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -22,6 +26,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@AutoConfigureMockMvc
 @Transactional
 public class Checkpoint4Tests {
 
@@ -35,7 +40,7 @@ public class Checkpoint4Tests {
     private UserProfileRepository userProfileRepository;
 
     @Autowired
-    private com.pennypals.repository.UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private BudgetRepository budgetRepository;
@@ -48,34 +53,26 @@ public class Checkpoint4Tests {
 
     @BeforeEach
     void setUp() {
-        // Clear all dependent child tables first to satisfy foreign key constraints
-        transactionRepository.deleteAll();
-        budgetRepository.deleteAll();
-        unlockedItemRepository.deleteAll();
-        userProfileRepository.deleteAll();
+        String suffix = java.util.UUID.randomUUID().toString().substring(0, 8);
 
-        // Now safe to delete parent users
-        userRepository.deleteAll();
-
-        // Setup test user
         testUser = new User();
-        testUser.setUsername("checkpoint4user");
+        testUser.setUsername("cp4user_" + suffix);
         testUser.setPassword("password123");
-        testUser.setEmail("cp4@pennypals.com");
+        testUser.setEmail("cp4_" + suffix + "@pennypals.com");
         testUser.setSecurityQuestion(1);
         testUser.setSecurityAnswer("Blue");
-        testUser = userRepository.save(testUser);
+        testUser = userRepository.saveAndFlush(testUser);
 
-        // Setup test profile linked via setUser()
         testProfile = new UserProfile();
         testProfile.setUser(testUser);
         testProfile.setPennies(50);
-        testProfile = userProfileRepository.save(testProfile);
+        testProfile = userProfileRepository.saveAndFlush(testProfile);
     }
 
     @Test
-    void test1_TransactionUpdate() {
-        // 1. Add initial transaction
+    @WithMockUser(username = "checkpoint4user", roles = {"USER"})
+    @DisplayName("1. Test Transaction Update")
+    public void test1_TransactionUpdate() {
         Transaction tx = new Transaction();
         tx.setCategory("Food");
         tx.setAmount(new BigDecimal("25.00"));
@@ -88,12 +85,10 @@ public class Checkpoint4Tests {
         assertEquals(1, userTransactions.size());
         Long txId = userTransactions.get(0).getId();
 
-        // 2. Update transaction details
         transactionService.updateTransaction(
                 txId, testUser.getId(), "Lifestyle", new BigDecimal("45.00"), "EXPENSE", "Updated Note"
         );
 
-        // 3. Verify changes
         Transaction updated = transactionRepository.findById(txId).orElseThrow();
         assertEquals("Lifestyle", updated.getCategory());
         assertEquals(0, new BigDecimal("45.00").compareTo(updated.getAmount()));
@@ -101,8 +96,9 @@ public class Checkpoint4Tests {
     }
 
     @Test
-    void test2_TransactionDeletionAndBalanceRecalculation() {
-        // 1. Add transaction (adds +10 pennies -> total 60)
+    @WithMockUser(username = "checkpoint4user", roles = {"USER"})
+    @DisplayName("2. Test Transaction Deletion and Balance Recalculation")
+    public void test2_TransactionDeletionAndBalanceRecalculation() {
         Transaction tx = new Transaction();
         tx.setCategory("Transportation");
         tx.setAmount(new BigDecimal("15.00"));
@@ -116,7 +112,6 @@ public class Checkpoint4Tests {
         );
         Long txId = userTransactions.get(0).getId();
 
-        // 2. Delete transaction with balance recalculation (subtracts 10 pennies -> back to 50)
         transactionService.deleteTransactionWithBalanceRecalculation(txId, testUser.getId());
 
         UserProfile profileAfterDelete = userProfileRepository.findByUserId(testUser.getId()).orElseThrow();
@@ -125,7 +120,9 @@ public class Checkpoint4Tests {
     }
 
     @Test
-    void test3_DynamicKeywordSearch() {
+    @WithMockUser(username = "checkpoint4user", roles = {"USER"})
+    @DisplayName("3. Test Dynamic Keyword Search")
+    public void test3_DynamicKeywordSearch() {
         Transaction tx1 = new Transaction();
         tx1.setCategory("Food");
         tx1.setAmount(new BigDecimal("10.00"));
@@ -140,7 +137,6 @@ public class Checkpoint4Tests {
         tx2.setDate(LocalDate.of(2026, 11, 2));
         transactionService.addTransaction(testUser, tx2);
 
-        // Test keyword search query
         List<Transaction> results = transactionService.searchTransactions(
                 testUser.getId(), "Groceries", "ALL", "ALL", null, null, null, null
         );
@@ -149,7 +145,9 @@ public class Checkpoint4Tests {
     }
 
     @Test
-    void test4_TransactionTypeFiltering() {
+    @WithMockUser(username = "checkpoint4user", roles = {"USER"})
+    @DisplayName("4. Test Transaction Type Filtering")
+    public void test4_TransactionTypeFiltering() {
         Transaction tx1 = new Transaction();
         tx1.setType("EXPENSE");
         tx1.setCategory("Food");
@@ -162,7 +160,6 @@ public class Checkpoint4Tests {
         tx2.setAmount(new BigDecimal("500.00"));
         transactionService.addTransaction(testUser, tx2);
 
-        // Filter strictly by INCOME type
         List<Transaction> incomeResults = transactionService.searchTransactions(
                 testUser.getId(), null, "INCOME", "ALL", null, null, null, null
         );
@@ -171,7 +168,9 @@ public class Checkpoint4Tests {
     }
 
     @Test
-    void test5_CategoryFiltering() {
+    @WithMockUser(username = "checkpoint4user", roles = {"USER"})
+    @DisplayName("5. Test Category Filtering")
+    public void test5_CategoryFiltering() {
         Transaction tx1 = new Transaction();
         tx1.setCategory("Food");
         tx1.setAmount(new BigDecimal("15.00"));
@@ -182,7 +181,6 @@ public class Checkpoint4Tests {
         tx2.setAmount(new BigDecimal("30.00"));
         transactionService.addTransaction(testUser, tx2);
 
-        // Filter strictly by Category
         List<Transaction> foodResults = transactionService.searchTransactions(
                 testUser.getId(), null, "ALL", "Food", null, null, null, null
         );
@@ -191,7 +189,9 @@ public class Checkpoint4Tests {
     }
 
     @Test
-    void test6_AmountRangeThresholdFiltering() {
+    @WithMockUser(username = "checkpoint4user", roles = {"USER"})
+    @DisplayName("6. Test Amount Range Threshold Filtering")
+    public void test6_AmountRangeThresholdFiltering() {
         Transaction tx1 = new Transaction();
         tx1.setCategory("Food");
         tx1.setAmount(new BigDecimal("10.00"));
@@ -202,7 +202,6 @@ public class Checkpoint4Tests {
         tx2.setAmount(new BigDecimal("750.00"));
         transactionService.addTransaction(testUser, tx2);
 
-        // Filter by amount range threshold
         List<Transaction> results = transactionService.searchTransactions(
                 testUser.getId(), null, "ALL", "ALL", null, null, new BigDecimal("500.00"), new BigDecimal("1000.00")
         );
@@ -211,7 +210,9 @@ public class Checkpoint4Tests {
     }
 
     @Test
-    void test7_DateRangeFiltering() {
+    @WithMockUser(username = "checkpoint4user", roles = {"USER"})
+    @DisplayName("7. Test Date Range Filtering")
+    public void test7_DateRangeFiltering() {
         Transaction tx1 = new Transaction();
         tx1.setCategory("Food");
         tx1.setAmount(new BigDecimal("15.00"));
@@ -224,7 +225,6 @@ public class Checkpoint4Tests {
         tx2.setDate(LocalDate.of(2026, 11, 20));
         transactionService.addTransaction(testUser, tx2);
 
-        // Filter by specific date range
         List<Transaction> results = transactionService.searchTransactions(
                 testUser.getId(), null, "ALL", "ALL", LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 10), null, null
         );
@@ -233,8 +233,9 @@ public class Checkpoint4Tests {
     }
 
     @Test
-    void test8_EmptySearchResults() {
-        // Search with criteria that matches nothing
+    @WithMockUser(username = "checkpoint4user", roles = {"USER"})
+    @DisplayName("8. Test Empty Search Results")
+    public void test8_EmptySearchResults() {
         List<Transaction> emptyResults = transactionService.searchTransactions(
                 testUser.getId(), "NonExistentKeywordXYZ", "ALL", "ALL", null, null, null, null
         );
@@ -244,7 +245,9 @@ public class Checkpoint4Tests {
     }
 
     @Test
-    void test9_CategorySpentTotalsMap() {
+    @WithMockUser(username = "checkpoint4user", roles = {"USER"})
+    @DisplayName("9. Test Category Spent Totals Map")
+    public void test9_CategorySpentTotalsMap() {
         Transaction tx1 = new Transaction();
         tx1.setCategory("Food");
         tx1.setAmount(new BigDecimal("20.00"));
@@ -262,7 +265,9 @@ public class Checkpoint4Tests {
     }
 
     @Test
-    void test10_IncomeCategoryHandling() {
+    @WithMockUser(username = "checkpoint4user", roles = {"USER"})
+    @DisplayName("10. Test Income Category Handling")
+    public void test10_IncomeCategoryHandling() {
         Transaction incomeTx = new Transaction();
         incomeTx.setCategory("Income");
         incomeTx.setAmount(new BigDecimal("1200.00"));
@@ -270,7 +275,6 @@ public class Checkpoint4Tests {
 
         Map<String, BigDecimal> totals = transactionService.getCategorySpentTotals(testUser.getId());
 
-        // Income is defaulted to type Income with a positive sum in the totals map
         assertTrue(totals.containsKey("Income"));
         assertEquals(0, new BigDecimal("1200.00").compareTo(totals.get("Income")));
     }
