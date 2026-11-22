@@ -220,7 +220,13 @@
     import { Bubble } from './js/bubbleEntities.js';
     import { FoodPellet } from './js/foodPelletEntities.js';
     import { userOrderedSlots, renderDecorSlot } from './js/decorEntities.js';
-    import { equippedFlora, renderFloraEntity } from './js/floraEntities.js';
+    import { equippedFlora, rollLoginFlora, clearSessionFlora, renderFloraEntity } from './js/floraEntities.js';
+
+    document.querySelectorAll('form[action*="/logout"]').forEach(form => {
+        form.addEventListener('submit', () => {
+            clearSessionFlora();
+        });
+    });
 
     const canvas = document.getElementById('aquariumCanvas');
     const ctx = canvas.getContext('2d');
@@ -231,16 +237,26 @@
     let bubbles = [];
     let lightRays = [];
 
-    // Fallback default species configuration lookup map if DB returns generic type strings
     const speciesConfigMap = {
-        'angel': { type: 'angel', size: 30, color1: '#ffcc00', color2: '#0066ff', maxSpeed: 1.6 },
-        'shark': { type: 'shark', size: 42, color1: '#708090', color2: '#2f4f4f', maxSpeed: 2.1 },
-        'puffer': { type: 'puffer', size: 26, color1: '#8b4513', color2: '#d2b48c', maxSpeed: 1.1 },
+        'angel': { type: 'angel', size: 30, color1: '#f59e0b', color2: '#ffffff', maxSpeed: 1.6 },
+        'puffer': { type: 'puffer', size: 26, color1: '#8b5e34', color2: '#fde68a', maxSpeed: 1.1 },
+        'shark': { type: 'shark', size: 42, color1: '#94a3b8', color2: '#cbd5e1', maxSpeed: 2.1 },
         'clownfish': { type: 'clownfish', size: 24, color1: '#ff4500', color2: '#ffffff', maxSpeed: 1.4 },
-        'tang': { type: 'tang', size: 32, color1: '#1e90ff', color2: '#ffd700', maxSpeed: 1.8 },
-        'koi': { type: 'koi', size: 35, color1: '#ffffff', color2: '#dc143c', maxSpeed: 1.3 },
-        'idol': { type: 'idol', size: 28, color1: '#111111', color2: '#ffd700', maxSpeed: 1.2 }
+        'tang': { type: 'tang', size: 32, color1: '#2563eb', color2: '#facc15', maxSpeed: 1.8 },
+        'koi': { type: 'koi', size: 35, color1: '#fb923c', color2: '#ffffff', maxSpeed: 1.3 },
+        'goldfish': { type: 'goldfish', size: 26, color1: '#f97316', color2: '#fde047', maxSpeed: 1.35 }
     };
+
+    function resolveFishType(rawValue) {
+        const val = (rawValue || 'clownfish').toLowerCase();
+        if (val.includes('angel')) return 'angel';
+        if (val.includes('puffer')) return 'puffer';
+        if (val.includes('shark')) return 'shark';
+        if (val.includes('tang')) return 'tang';
+        if (val.includes('koi')) return 'koi';
+        if (val.includes('goldfish')) return 'goldfish';
+        return 'clownfish';
+    }
 
     function resizeCanvas() {
         let oldWidth = canvas.width;
@@ -255,7 +271,6 @@
                 if (fish.y > canvas.height - 80) fish.y = canvas.height - 120;
             });
         }
-        // Re-initialize environment light rays to match new width uniformly
         initEnvironment();
     }
     window.addEventListener('resize', resizeCanvas);
@@ -267,7 +282,6 @@
             bubbles.push(new Bubble(canvas.width, canvas.height));
         }
 
-        // Uniform light rays configuration
         lightRays = [];
         const rayCount = 5;
         const spacing = canvas.width / rayCount;
@@ -293,7 +307,6 @@
             ctx.beginPath();
             ctx.moveTo(ray.x, 0);
             ctx.lineTo(ray.x + ray.width, 0);
-            // Uniform angle slant at the bottom
             ctx.lineTo(ray.x + ray.width + 100, canvas.height);
             ctx.lineTo(ray.x + 100, canvas.height);
             ctx.closePath();
@@ -313,46 +326,117 @@
         ctx.fillRect(0, floorY, canvas.width, 10);
 
         equippedFlora.forEach(flora => {
-            renderFloraEntity(ctx, flora, floorY);
+            renderFloraEntity(ctx, flora, floorY, time);
         });
 
-        const slotsToRender = (activeDecor.length > 0) ? activeDecor : userOrderedSlots.slice(0, 1);
-        slotsToRender.forEach(slot => {
+        activeDecor.forEach(slot => {
             renderDecorSlot(ctx, slot, floorY);
         });
+    }
+
+    // Gentle separation force so fish avoid overlapping unless food is nearby or space is tight
+    function applyFishSeparation(fishList, activeFoods) {
+        const hasFood = activeFoods && activeFoods.length > 0;
+        const basePush = hasFood ? 0.045 : 0.11;
+
+        for (let i = 0; i < fishList.length; i++) {
+            for (let j = i + 1; j < fishList.length; j++) {
+                const a = fishList[i];
+                const b = fishList[j];
+                const dx = a.x - b.x;
+                const dy = a.y - b.y;
+                const dist = Math.hypot(dx, dy);
+                const minSep = ((a.size || 26) + (b.size || 26)) * 1.15;
+
+                if (dist > 0.01 && dist < minSep) {
+                    const nx = dx / dist;
+                    const ny = dy / dist;
+                    const overlap = (minSep - dist) / minSep;
+                    const push = overlap * overlap * basePush;
+
+                    if (typeof a.vx === 'number') a.vx += nx * push;
+                    if (typeof a.vy === 'number') a.vy += ny * push;
+                    if (typeof b.vx === 'number') b.vx -= nx * push;
+                    if (typeof b.vy === 'number') b.vy -= ny * push;
+
+                    if (typeof a.speedX === 'number') a.speedX += nx * push;
+                    if (typeof a.speedY === 'number') a.speedY += ny * push;
+                    if (typeof b.speedX === 'number') b.speedX -= nx * push;
+                    if (typeof b.speedY === 'number') b.speedY -= ny * push;
+                }
+            }
+        }
     }
 
     // FETCH EQUIPPED ITEMS DYNAMICALLY FROM DATABASE AND SEPARATE FISH VS DECOR
     async function initAquarium() {
         initEnvironment();
+
+        const hasResetCookie = document.cookie
+            .split(';')
+            .some(part => part.trim().startsWith('pennypals_reset_flora='));
+
+        if (hasResetCookie) {
+            clearSessionFlora();
+            document.cookie = 'pennypals_reset_flora=; Path=/; Max-Age=0';
+        }
+
+        rollLoginFlora();
         try {
-            const response = await fetch('/api/aquarium/equipped');
+            const response = await fetch('/api/aquarium/equipped', { cache: 'no-store' });
             if (response.ok) {
                 const equippedItems = await response.json();
                 if (equippedItems && equippedItems.length > 0) {
-                    const dbFishList = equippedItems.filter(item => item.itemType && item.itemType.toLowerCase() === 'fish');
+                    const dbFishList = equippedItems.filter(item =>
+                        item.itemType && item.itemType.toLowerCase() === 'fish'
+                    );
 
                     if (dbFishList.length > 0) {
                         fishes = dbFishList.map(item => {
-                            const baseConfig = speciesConfigMap[item.itemId] || speciesConfigMap[item.itemType] || speciesConfigMap['clownfish'];
+                            const resolvedType = resolveFishType(item.itemId || item.itemName || item.itemType);
+                            const baseConfig = speciesConfigMap[resolvedType] || speciesConfigMap['clownfish'];
                             return new DetailedFish({
                                 ...baseConfig,
-                                name: item.itemName || baseConfig.name
+                                type: resolvedType,
+                                name: item.itemName || baseConfig.name,
+                                color1: item.colorHex || baseConfig.color1
                             }, canvas.width, canvas.height);
                         });
                     } else {
                         fishes = [new DetailedFish(speciesConfigMap['clownfish'], canvas.width, canvas.height)];
                     }
 
-                    const dbDecorList = equippedItems.filter(item => item.itemType && (item.itemType.toLowerCase() === 'decor' || item.itemType.toLowerCase() === 'decoration'));
-                    if (dbDecorList.length > 0 && userOrderedSlots.length > 0) {
-                        activeDecor = dbDecorList.slice(0, 1).map((decor, index) => ({
-                            ...userOrderedSlots[index],
-                            type: decor.itemId || decor.itemName,
-                            name: decor.itemName,
-                            itemName: decor.itemName,
-                            colorHex: decor.colorHex
-                        }));
+                    const dbDecorList = equippedItems.filter(item =>
+                        item.itemType && (item.itemType.toLowerCase() === 'decor' || item.itemType.toLowerCase() === 'decoration')
+                    );
+
+                    if (dbDecorList.length > 0) {
+                        const sortedDecors = [...dbDecorList].sort((a, b) => {
+                            const orderA = a.equipOrder != null ? a.equipOrder : 999;
+                            const orderB = b.equipOrder != null ? b.equipOrder : 999;
+                            return orderA - orderB;
+                        });
+
+                        // Place each equipped decoration into its exact equipOrder slot (1->0, 2->1, 3->2)
+                        activeDecor = sortedDecors.slice(0, 3).map((decor, index) => {
+                            const targetSlotIdx = (decor.equipOrder != null && decor.equipOrder >= 1 && decor.equipOrder <= 3)
+                                ? decor.equipOrder - 1
+                                : index;
+                            const slotBase = (userOrderedSlots && userOrderedSlots[targetSlotIdx])
+                                ? userOrderedSlots[targetSlotIdx]
+                                : { slotIndex: targetSlotIdx, ratio: 0.25 + targetSlotIdx * 0.25 };
+
+                            return {
+                                ...slotBase,
+                                slotIndex: targetSlotIdx,
+                                equipOrder: decor.equipOrder ?? (targetSlotIdx + 1),
+                                type: decor.itemId || decor.itemName,
+                                name: decor.itemName,
+                                itemName: decor.itemName,
+                                selectedItem: decor.itemName || decor.itemId,
+                                colorHex: decor.colorHex
+                            };
+                        });
                     } else {
                         activeDecor = [];
                     }
@@ -416,6 +500,8 @@
             f.update(canvas.height);
             f.draw(ctx);
         });
+
+        applyFishSeparation(fishes, foods);
 
         fishes.forEach(fish => {
             fish.update(canvas.width, canvas.height, foods);

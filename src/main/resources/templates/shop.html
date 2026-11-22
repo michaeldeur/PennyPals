@@ -10,12 +10,12 @@
         html, body {
             height: 100%;
             margin: 0;
-            overflow: hidden; /* Locks the outer window from scrolling; inner container handles scroll */
+            overflow: hidden;
         }
         body {
             display: flex;
             flex-direction: column;
-            background-color: #ffffff; /* Soft background */
+            background-color: #ffffff;
         }
         .custom-header, .custom-footer {
             background-color: #87CEEB;
@@ -61,68 +61,191 @@
             cursor: pointer;
         }
 
-        /* Main container is now the scrollable viewport sandwiched between locked header/nav and footer */
+        /* Main container scrolls only when overall page content exceeds viewport */
         .main-container {
             flex: 1;
             display: flex;
             align-items: flex-start;
             justify-content: center;
             width: 100%;
-            padding: 2rem;
-            overflow-y: auto; /* Allows only the main content to scroll */
+            padding: 1.5rem 2rem;
+            overflow-y: auto;
+            overflow-x: hidden;
             box-sizing: border-box;
         }
 
-        /* Flex wrapper to align title to the left of the centered card on desktop */
         .content-wrapper {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: stretch;
             width: 100%;
-            max-width: 900px;
-            position: relative;
-        }
-
-        .page-title-section {
-            width: 100%;
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-
-        @media (min-width: 768px) {
-            .content-wrapper {
-                flex-direction: row;
-                justify-content: center;
-                align-items: flex-start;
-            }
-            .page-title-section {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: auto;
-                text-align: left;
-                margin-bottom: 0;
-            }
+            max-width: 1120px;
+            min-width: 0;
         }
 
         .page-title {
+            font-weight: 600;
+            font-size: 1.75rem;
+            color: #000000;
+            margin-bottom: 1rem;
+        }
+
+        .shop-section-box {
+            border: 1px solid #8a8a8a;
+            border-radius: 16px;
+            padding: 1rem 1.25rem 1.25rem;
+            background-color: #ffffff;
+            margin-bottom: 1.5rem;
+            min-width: 0;
+        }
+
+        .shop-section-heading {
+            font-size: 1.15rem;
             font-weight: 500;
-            font-size: 1.8rem;
+            color: #111111;
+            margin-bottom: 0.85rem;
+        }
+
+        /* Only scrolls when needed (never forces an unnecessary scrollbar on desktop) */
+        .section-scroll-area {
+            overflow-x: auto;
+            overflow-y: visible;
+            min-width: 0;
+        }
+
+        .items-grid-7 {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 0.85rem;
+        }
+
+        .shop-item-tile {
+            position: relative;
+            border: 1px solid #8a8a8a;
+            border-radius: 14px;
+            padding: 0.5rem 0.45rem 0.55rem;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 172px;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+
+        .equip-checkbox-wrap {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.25rem;
+            line-height: 1;
+            min-height: 18px;
+        }
+
+        .equip-checkbox-left {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+        }
+
+        .equip-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #6c757d;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .equip-checkbox:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        .slot-badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #0f3d66;
+            background-color: #d6f1ff;
+            border: 1px solid #7cc5eb;
+            border-radius: 999px;
+            padding: 0.08rem 0.38rem;
+            white-space: nowrap;
+        }
+
+        .entity-canvas {
+            width: 112px;
+            max-width: 100%;
+            height: auto;
+            aspect-ratio: 120 / 84;
+            border-radius: 10px;
+            border: 1px solid #93c5fd;
+            display: block;
+            margin: 0.15rem auto 0.2rem;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .entity-type-name {
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: #1e293b;
+            text-align: center;
+            line-height: 1.2;
+            margin-bottom: 0.35rem;
+            word-break: break-word;
+            width: 100%;
+        }
+
+        .price-pill-btn {
+            width: 100%;
+            background-color: #e6e6e6;
+            color: #333333;
+            border: 1px solid #bdbdbd;
+            border-radius: 999px;
+            padding: 0.22rem 0.45rem;
+            font-size: 0.78rem;
+            font-weight: 500;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: background-color 0.15s ease;
+        }
+
+        .price-pill-btn:hover:not(:disabled) {
+            background-color: #d4d4d4;
             color: #000000;
         }
 
-        .shop-card {
-            border: 1px solid #ced4da;
-            border-radius: 12px;
-            padding: 2.5rem;
-            background-color: #ffffff;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-            width: 100%;
-            max-width: 650px;
-            text-align: center;
+        .price-pill-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
         }
 
-        /* Mobile Responsiveness for Header & Nav */
+        .owned-pill-badge {
+            display: block;
+            width: 100%;
+            background-color: #e6e6e6;
+            color: #333333;
+            border: 1px solid #bdbdbd;
+            border-radius: 999px;
+            padding: 0.22rem 0.45rem;
+            font-size: 0.78rem;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @media (max-width: 1024px) {
+            .items-grid-7 {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+
         @media (max-width: 768px) {
             .custom-header .container-fluid {
                 flex-direction: column;
@@ -140,8 +263,38 @@
                 padding: 0.25rem 0.5rem;
                 font-size: 0.85rem;
             }
-            .transactions-card {
-                padding: 1rem 0.5rem;
+            .main-container {
+                padding: 0.75rem;
+            }
+            .shop-section-box {
+                padding: 0.75rem;
+            }
+            .items-grid-7 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .main-container {
+                padding: 0.5rem;
+            }
+            .shop-section-box {
+                padding: 0.55rem;
+                border-radius: 12px;
+            }
+            .items-grid-7 {
+                gap: 0.4rem;
+            }
+            .shop-item-tile {
+                padding: 0.4rem 0.35rem 0.45rem;
+                border-radius: 10px;
+                min-height: 148px;
+            }
+            .entity-type-name,
+            .price-pill-btn,
+            .owned-pill-badge {
+                font-size: 0.68rem;
             }
         }
     </style>
@@ -178,19 +331,111 @@
     </div>
 </nav>
 
-<!-- Main Content Area (Scrolls independently between the locked header/nav and footer) -->
+<!-- Main Content Area -->
 <main class="main-container">
     <div class="content-wrapper">
-        <!-- Top-left aligned header matching project design standards -->
-        <div class="page-title-section">
-            <h2 class="page-title"></h2>
-        </div>
+        <div th:if="${successMessage}" class="alert alert-success py-2 mb-3" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger py-2 mb-3" th:text="${errorMessage}"></div>
 
-        <!-- Centered Shop Card -->
-        <div class="shop-card">
-            <h3 class="text-success mb-2">Fish & Decor Shop</h3>
-            <p class="text-muted small mb-0">E-commerce grid, penny purchase transactions, and inventory equipment toggles will be built in Checkpoint 6.</p>
-        </div>
+        <h2 class="page-title">Shop</h2>
+
+        <!-- FISH SECTION (7 items in ascending price order) -->
+        <section class="shop-section-box">
+            <h3 class="shop-section-heading">Fish</h3>
+            <div class="section-scroll-area">
+                <div class="items-grid-7">
+                    <th:block th:if="${catalog != null and !#lists.isEmpty(catalog)}"
+                              th:each="item : ${catalog}">
+                        <div class="shop-item-tile"
+                             th:if="${item[1] == 'FISH'}"
+                             th:with="matchedItem=${ownedByName != null ? ownedByName.get(item[0]) : null},
+                                      isOwned=${matchedItem != null or (ownedNames != null and ownedNames.contains(item[0]))},
+                                      isItemEquipped=${matchedItem != null and matchedItem.isEquipped == true}">
+                            <div class="equip-checkbox-wrap">
+                                <div class="equip-checkbox-left">
+                                    <form th:if="${matchedItem != null}" th:action="@{/shop/toggle/{id}(id=${matchedItem.id})}" method="post" class="m-0">
+                                        <input type="checkbox" class="equip-checkbox"
+                                               th:checked="${isItemEquipped}"
+                                               onchange="this.form.submit()"
+                                               th:title="${isItemEquipped ? 'Unequip fish' : 'Equip fish'}">
+                                    </form>
+                                    <input th:if="${matchedItem == null}" type="checkbox" class="equip-checkbox" disabled aria-label="Unowned fish">
+                                </div>
+                            </div>
+
+                            <canvas class="entity-canvas" width="120" height="84"
+                                    data-entity-kind="FISH"
+                                    th:attr="data-item-name=${item[0]},data-color1=${item[2]},data-color2=${item.length > 4 ? item[4] : '#ffffff'}"></canvas>
+                            <div class="entity-type-name" th:text="${item[0]}">Fish Type</div>
+
+                            <form th:if="${!isOwned}" th:action="@{/shop/purchase}" method="post" class="w-100 m-0">
+                                <input type="hidden" name="itemName" th:value="${item[0]}">
+                                <input type="hidden" name="itemType" th:value="${item[1]}">
+                                <input type="hidden" name="colorHex" th:value="${item[2]}">
+                                <input type="hidden" name="cost" th:value="${item[3]}">
+                                <button type="submit" class="price-pill-btn"
+                                        th:disabled="${profile == null or (itemCosts != null and profile.pennies < itemCosts.get(item[0]))}"
+                                        th:text="${item[3]} + ' Pennies'">
+                                    XXX Pennies
+                                </button>
+                            </form>
+                            <span th:if="${isOwned}" class="owned-pill-badge">Purchased</span>
+                        </div>
+                    </th:block>
+                </div>
+            </div>
+        </section>
+
+        <!-- DECORATIONS SECTION (7 items in ascending price order, max 3 equipped at once) -->
+        <section class="shop-section-box">
+            <h3 class="shop-section-heading">Decorations</h3>
+            <div class="section-scroll-area">
+                <div class="items-grid-7">
+                    <th:block th:if="${catalog != null and !#lists.isEmpty(catalog)}"
+                              th:each="item : ${catalog}">
+                        <div class="shop-item-tile"
+                             th:if="${item[1] == 'DECOR'}"
+                             th:with="matchedItem=${ownedByName != null ? ownedByName.get(item[0]) : null},
+                                      isOwned=${matchedItem != null or (ownedNames != null and ownedNames.contains(item[0]))},
+                                      isItemEquipped=${matchedItem != null and matchedItem.isEquipped == true},
+                                      slotNum=${(matchedItem != null and decorSlotMap != null) ? decorSlotMap.get(matchedItem.id) : null},
+                                      decorCapReached=${!isItemEquipped and equippedDecorCount >= 3}">
+                            <div class="equip-checkbox-wrap">
+                                <div class="equip-checkbox-left">
+                                    <form th:if="${matchedItem != null}" th:action="@{/shop/toggle/{id}(id=${matchedItem.id})}" method="post" class="m-0">
+                                        <input type="checkbox" class="equip-checkbox"
+                                               th:checked="${isItemEquipped}"
+                                               th:disabled="${decorCapReached}"
+                                               onchange="this.form.submit()"
+                                               th:title="${decorCapReached ? 'Max 3 decorations can be equipped at once' : (isItemEquipped ? 'Unequip decoration' : 'Equip decoration')}">
+                                    </form>
+                                    <input th:if="${matchedItem == null}" type="checkbox" class="equip-checkbox" disabled aria-label="Unowned decoration">
+                                    <span th:if="${isItemEquipped and slotNum != null}" class="slot-badge" th:text="'Slot ' + ${slotNum}">Slot 1</span>
+                                </div>
+                            </div>
+
+                            <canvas class="entity-canvas" width="120" height="84"
+                                    data-entity-kind="DECOR"
+                                    th:attr="data-item-name=${item[0]},data-color1=${item[2]}"></canvas>
+                            <div class="entity-type-name" th:text="${item[0]}">Decor Type</div>
+
+                            <form th:if="${!isOwned}" th:action="@{/shop/purchase}" method="post" class="w-100 m-0">
+                                <input type="hidden" name="itemName" th:value="${item[0]}">
+                                <input type="hidden" name="itemType" th:value="${item[1]}">
+                                <input type="hidden" name="colorHex" th:value="${item[2]}">
+                                <input type="hidden" name="cost" th:value="${item[3]}">
+                                <button type="submit" class="price-pill-btn"
+                                        th:disabled="${profile == null or (itemCosts != null and profile.pennies < itemCosts.get(item[0]))}"
+                                        th:text="${item[3]} + ' Pennies'">
+                                    XXX Pennies
+                                </button>
+                            </form>
+                            <span th:if="${isOwned}" class="owned-pill-badge">Purchased</span>
+                        </div>
+                    </th:block>
+                </div>
+            </div>
+        </section>
     </div>
 </main>
 
@@ -201,5 +446,122 @@
 
 <!-- Bootstrap JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Render Animated Water + Fish & Decor thumbnails using fishEntities.js and decorEntities.js -->
+<script type="module">
+    import { DetailedFish } from '/js/fishEntities.js';
+    import { renderDecorSlot } from '/js/decorEntities.js';
+
+    function resolveFishType(rawNameOrType) {
+        const val = (rawNameOrType || 'clownfish').toLowerCase();
+        if (val.includes('angel')) return 'angel';
+        if (val.includes('shark')) return 'shark';
+        if (val.includes('puffer')) return 'puffer';
+        if (val.includes('tang')) return 'tang';
+        if (val.includes('koi')) return 'koi';
+        if (val.includes('goldfish')) return 'goldfish';
+        return 'clownfish';
+    }
+
+    const tileEntries = Array.from(document.querySelectorAll('canvas.entity-canvas')).map((canvas, idx) => {
+        const ctx = canvas.getContext('2d');
+        const kind = canvas.dataset.entityKind;
+        const color1 = canvas.dataset.color1;
+        const color2 = canvas.dataset.color2 || '#ffffff';
+
+        let fish = null;
+        if (kind === 'FISH') {
+            const fishType = resolveFishType(canvas.dataset.itemName);
+            fish = new DetailedFish({
+                type: fishType,
+                name: canvas.dataset.itemName || fishType,
+                size: 16,
+                color1: color1 || undefined,
+                color2,
+                maxSpeed: 0
+            }, canvas.width, canvas.height);
+            fish.vx = 0.5;
+            fish.vy = 0;
+            fish.facingRight = true;
+            fish.x = canvas.width * 0.58;
+            fish.y = canvas.height * 0.55;
+        }
+
+        const bubbles = [
+            { x: (idx * 23 + 18) % (canvas.width - 16) + 8, y: canvas.height - 6, r: 2.2, speed: 0.35 + (idx % 3) * 0.1 },
+            { x: (idx * 41 + 64) % (canvas.width - 16) + 8, y: canvas.height * 0.55, r: 1.6, speed: 0.28 + ((idx + 1) % 3) * 0.1 }
+        ];
+
+        return { canvas, ctx, kind, color1, fish, bubbles, phase: idx * 0.8 };
+    });
+
+    function drawAnimatedWater(ctx, width, height, t, bubbles, phase) {
+        const waterGrad = ctx.createLinearGradient(0, 0, 0, height);
+        waterGrad.addColorStop(0, '#38bdf8');
+        waterGrad.addColorStop(0.55, '#0284c7');
+        waterGrad.addColorStop(1, '#0c4a6e');
+        ctx.fillStyle = waterGrad;
+        ctx.fillRect(0, 0, width, height);
+
+        // Gentle animated wave ripples near top
+        ctx.save();
+        ctx.strokeStyle = 'rgba(224, 242, 254, 0.55)';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        for (let x = 0; x <= width; x += 6) {
+            const waveY = 9 + Math.sin(x * 0.08 + t * 0.004 + phase) * 2.4;
+            if (x === 0) ctx.moveTo(x, waveY);
+            else ctx.lineTo(x, waveY);
+        }
+        ctx.stroke();
+
+        // Subtle shimmering light bands
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+        const shimmerShift = Math.sin(t * 0.002 + phase) * 12;
+        ctx.beginPath();
+        ctx.ellipse(width * 0.35 + shimmerShift, height * 0.28, 22, 5, -0.25, 0, Math.PI * 2);
+        ctx.ellipse(width * 0.72 - shimmerShift, height * 0.42, 18, 4, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Tiny rising bubbles
+        bubbles.forEach(b => {
+            b.y -= b.speed;
+            b.x += Math.sin(t * 0.003 + b.y * 0.08) * 0.25;
+            if (b.y < 10) {
+                b.y = height - 5;
+            }
+            ctx.strokeStyle = 'rgba(240, 249, 255, 0.75)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+            ctx.stroke();
+        });
+        ctx.restore();
+    }
+
+    function renderAllTiles(now) {
+        tileEntries.forEach(entry => {
+            const { canvas, ctx, kind, color1, fish, bubbles, phase } = entry;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawAnimatedWater(ctx, canvas.width, canvas.height, now, bubbles, phase);
+
+            if (kind === 'FISH' && fish) {
+                fish.tailWag = now * 0.007 + phase;
+                fish.finWag = now * 0.005 + phase;
+                fish.draw(ctx);
+            } else if (kind === 'DECOR') {
+                renderDecorSlot(ctx, {
+                    ratio: 0.5,
+                    selectedItem: canvas.dataset.itemName || 'CHEST',
+                    colorHex: color1 || undefined
+                }, canvas.height - 8);
+            }
+        });
+
+        requestAnimationFrame(renderAllTiles);
+    }
+
+    requestAnimationFrame(renderAllTiles);
+</script>
 </body>
 </html>

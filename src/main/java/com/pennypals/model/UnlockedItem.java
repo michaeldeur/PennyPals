@@ -31,6 +31,9 @@ public class UnlockedItem {
     @Column(nullable = false)
     private Boolean isEquipped = false;
 
+    @Column(name = "equip_order")
+    private Integer equipOrder;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -46,6 +49,11 @@ public class UnlockedItem {
         if (isPurchased != null) this.isPurchased = isPurchased;
         if (isEquipped != null) this.isEquipped = isEquipped;
         this.user = user;
+    }
+
+    public UnlockedItem(String itemName, String itemType, String colorHex, String currencyType, Integer cost, Boolean isPurchased, Boolean isEquipped, Integer equipOrder, User user) {
+        this(itemName, itemType, colorHex, currencyType, cost, isPurchased, isEquipped, user);
+        this.equipOrder = equipOrder;
     }
 
     // Getters and Setters
@@ -65,6 +73,8 @@ public class UnlockedItem {
     public void setIsPurchased(Boolean isPurchased) { this.isPurchased = isPurchased; }
     public Boolean getIsEquipped() { return isEquipped; }
     public void setIsEquipped(Boolean isEquipped) { this.isEquipped = isEquipped; }
+    public Integer getEquipOrder() { return equipOrder; }
+    public void setEquipOrder(Integer equipOrder) { this.equipOrder = equipOrder; }
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
 }

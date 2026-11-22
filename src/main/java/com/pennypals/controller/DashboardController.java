@@ -49,16 +49,4 @@ public class DashboardController {
         addProfileToModel(principal, model);
         return "aquarium";
     }
-
-    @GetMapping("/shop")
-    public String shopPage(Principal principal, Model model) {
-        addProfileToModel(principal, model);
-        return "shop";
-    }
-
-    @GetMapping("/quests")
-    public String questsPage(Principal principal, Model model) {
-        addProfileToModel(principal, model);
-        return "quests";
-    }
 }
