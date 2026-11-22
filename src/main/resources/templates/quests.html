@@ -15,7 +15,7 @@
         body {
             display: flex;
             flex-direction: column;
-            background-color: #ffffff; /* Soft aquarium water background */
+            background-color: #ffffff;
         }
         .custom-header, .custom-footer {
             background-color: #87CEEB;
@@ -68,58 +68,128 @@
             align-items: flex-start;
             justify-content: center;
             width: 100%;
-            padding: 2rem;
+            padding: 1.5rem 2rem 2rem;
             overflow-y: auto; /* Allows only the main content to scroll */
             box-sizing: border-box;
         }
 
-        /* Flex wrapper to align title to the left of the centered card on desktop */
         .content-wrapper {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: stretch;
             width: 100%;
-            max-width: 900px;
+            max-width: 780px;
             position: relative;
         }
 
         .page-title-section {
             width: 100%;
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-
-        @media (min-width: 768px) {
-            .content-wrapper {
-                flex-direction: row;
-                justify-content: center;
-                align-items: flex-start;
-            }
-            .page-title-section {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: auto;
-                text-align: left;
-                margin-bottom: 0;
-            }
+            text-align: left;
+            margin-bottom: 0.75rem;
         }
 
         .page-title {
-            font-weight: 500;
-            font-size: 1.8rem;
+            font-weight: 700;
+            font-size: 1.6rem;
             color: #000000;
+            margin: 0;
         }
 
-        .quests-card {
-            border: 1px solid #ced4da;
-            border-radius: 12px;
-            padding: 2.5rem;
-            background-color: #ffffff;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-            width: 100%;
-            max-width: 650px;
+        .quests-refresh-header {
             text-align: center;
+            font-size: 1.15rem;
+            font-weight: 500;
+            color: #212529;
+            margin-bottom: 1rem;
+        }
+
+        .weekly-refresh-header {
+            text-align: center;
+            font-size: 1.05rem;
+            font-weight: 500;
+            color: #212529;
+            margin: 1rem 0 0.75rem;
+        }
+
+        .quest-rows-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            width: 100%;
+            margin-bottom: 1.25rem;
+        }
+
+        .quest-pill-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            background-color: #ffffff;
+            border: 1.5px solid #9aa0a6;
+            border-radius: 14px;
+            padding: 0.65rem 1.15rem;
+            min-height: 48px;
+        }
+
+        .quest-row-left {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            min-width: 0;
+        }
+
+        .quest-checkbox-btn {
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            border: 1.5px solid #5f6368;
+            border-radius: 2px;
+            background-color: #ffffff;
+            color: #198754;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            line-height: 1;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .quest-checkbox-btn:hover:not(:disabled) {
+            border-color: #198754;
+            background-color: #f0fdf4;
+        }
+
+        .quest-checkbox-btn:disabled {
+            cursor: default;
+            opacity: 1;
+        }
+
+        .quest-text-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .quest-title-text {
+            font-size: 0.98rem;
+            font-weight: 500;
+            color: #202124;
+            line-height: 1.25;
+        }
+
+        .quest-desc-text {
+            font-size: 0.8rem;
+            color: #5f6368;
+            line-height: 1.2;
+        }
+
+        .quest-reward-text {
+            font-size: 0.92rem;
+            font-weight: 500;
+            color: #202124;
+            white-space: nowrap;
         }
 
         /* Mobile Responsiveness for Header & Nav */
@@ -140,8 +210,11 @@
                 padding: 0.25rem 0.5rem;
                 font-size: 0.85rem;
             }
-            .transactions-card {
-                padding: 1rem 0.5rem;
+            .main-container {
+                padding: 1rem;
+            }
+            .quest-pill-row {
+                padding: 0.6rem 0.85rem;
             }
         }
     </style>
@@ -181,15 +254,71 @@
 <!-- Main Content Area (Scrolls independently between the locked header/nav and footer) -->
 <main class="main-container">
     <div class="content-wrapper">
-        <!-- Top-left aligned header matching project design standards -->
+        <!-- Flash Messages -->
+        <div th:if="${successMessage}" class="alert alert-success w-100 py-2 mb-3" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger w-100 py-2 mb-3" th:text="${errorMessage}"></div>
+
         <div class="page-title-section">
-            <h2 class="page-title"></h2>
+            <h2 class="page-title">Quests</h2>
         </div>
 
-        <!-- Centered Quests Card -->
-        <div class="quests-card">
-            <h3 class="text-success mb-2">Daily Quests & Habit Goals</h3>
-            <p class="text-muted small mb-0">Interactive checklist and penny reward claim actions will be built in Checkpoint 6.</p>
+        <div class="quests-refresh-header">
+            Daily Quests Refresh: <span id="dailyQuestsRefreshTimer">23:23:23</span>
+        </div>
+
+        <div class="quest-rows-stack" th:if="${dailyQuests != null and !dailyQuests.isEmpty()}">
+            <div class="quest-pill-row" th:each="q : ${dailyQuests}">
+                <div class="quest-row-left">
+                    <form th:if="${!q.claimed}" th:action="@{/quests/complete/{id}(id=${q.id})}" method="post" class="m-0 d-flex align-items-center">
+                        <button type="submit"
+                                class="quest-checkbox-btn"
+                                title="Complete & Claim Quest"
+                                aria-label="Complete and claim quest"></button>
+                    </form>
+                    <button th:if="${q.claimed}"
+                            type="button"
+                            class="quest-checkbox-btn"
+                            disabled
+                            title="Claimed"
+                            aria-label="Quest claimed">&#10003;</button>
+
+                    <div class="quest-text-group">
+                        <span class="quest-title-text" th:text="${q.title}">Daily Quest</span>
+                        <span class="quest-desc-text" th:if="${q.description != null and !#strings.isEmpty(q.description)}" th:text="${q.description}">Description</span>
+                    </div>
+                </div>
+                <span class="quest-reward-text" th:text="${q.pennyReward} + ' Pennies'">XXX Pennies</span>
+            </div>
+        </div>
+        <p class="text-muted text-center small mb-3" th:if="${dailyQuests == null or dailyQuests.isEmpty()}">No daily quests available right now.</p>
+
+        <div class="weekly-refresh-header" th:if="${weeklyQuests != null and !weeklyQuests.isEmpty()}">
+            Weekly Quests Refresh: <span id="weeklyQuestsRefreshTimer">6d 23:23:23</span>
+        </div>
+
+        <div class="quest-rows-stack" th:if="${weeklyQuests != null and !weeklyQuests.isEmpty()}">
+            <div class="quest-pill-row" th:each="q : ${weeklyQuests}">
+                <div class="quest-row-left">
+                    <form th:if="${!q.claimed}" th:action="@{/quests/complete/{id}(id=${q.id})}" method="post" class="m-0 d-flex align-items-center">
+                        <button type="submit"
+                                class="quest-checkbox-btn"
+                                title="Complete & Claim Quest"
+                                aria-label="Complete and claim quest"></button>
+                    </form>
+                    <button th:if="${q.claimed}"
+                            type="button"
+                            class="quest-checkbox-btn"
+                            disabled
+                            title="Claimed"
+                            aria-label="Quest claimed">&#10003;</button>
+
+                    <div class="quest-text-group">
+                        <span class="quest-title-text" th:text="${q.title}">Weekly Quest</span>
+                        <span class="quest-desc-text" th:if="${q.description != null and !#strings.isEmpty(q.description)}" th:text="${q.description}">Description</span>
+                    </div>
+                </div>
+                <span class="quest-reward-text" th:text="${q.pennyReward} + ' Pennies'">XXX Pennies</span>
+            </div>
         </div>
     </div>
 </main>
@@ -201,5 +330,42 @@
 
 <!-- Bootstrap JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+        const dailyTimerEl = document.getElementById('dailyQuestsRefreshTimer');
+        const weeklyTimerEl = document.getElementById('weeklyQuestsRefreshTimer');
+
+        function formatHms(totalSeconds) {
+            const clamped = Math.max(0, totalSeconds);
+            const hours = String(Math.floor(clamped / 3600)).padStart(2, '0');
+            const minutes = String(Math.floor((clamped % 3600) / 60)).padStart(2, '0');
+            const seconds = String(clamped % 60).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+        function updateCountdowns() {
+            const now = new Date();
+            const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+
+            if (dailyTimerEl) {
+                const dailySeconds = Math.floor((nextMidnight - now) / 1000);
+                dailyTimerEl.textContent = formatHms(dailySeconds);
+            }
+
+            if (weeklyTimerEl) {
+                // Next Monday 00:00:00 (Sunday getDay() === 0 -> 1 day until Monday)
+                const daysUntilMonday = (8 - now.getDay()) % 7 || 7;
+                const nextWeekReset = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilMonday, 0, 0, 0);
+                const totalWeeklySeconds = Math.max(0, Math.floor((nextWeekReset - now) / 1000));
+                const days = Math.floor(totalWeeklySeconds / 86400);
+                const remSeconds = totalWeeklySeconds % 86400;
+                weeklyTimerEl.textContent = `${days}d ${formatHms(remSeconds)}`;
+            }
+        }
+
+        updateCountdowns();
+        setInterval(updateCountdowns, 1000);
+    })();
+</script>
 </body>
 </html>
