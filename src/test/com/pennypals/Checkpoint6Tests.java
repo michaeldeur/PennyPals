@@ -125,6 +125,9 @@ public class Checkpoint6Tests {
         profile.setPennies(39);
         userProfileRepository.saveAndFlush(profile);
 
+        int initialOwnedCount = unlockedItemRepository.findByUserId(user.getId()).size();
+
+        // Insufficient pennies (39 < 40)
         mockMvc.perform(post("/shop/purchase")
                         .with(csrf())
                         .param("itemName", "Goldfish")
@@ -136,22 +139,26 @@ public class Checkpoint6Tests {
                 .andExpect(flash().attributeExists("errorMessage"));
 
         assertEquals(39, getDemoProfile(user).getPennies());
+        assertEquals(initialOwnedCount, unlockedItemRepository.findByUserId(user.getId()).size(),
+                "Unaffordable item must not be added to unlocked items.");
         assertFalse(unlockedItemRepository.findByUserId(user.getId()).stream()
                 .anyMatch(i -> "Goldfish".equals(i.getItemName())));
 
+        // Negative cost guard
         mockMvc.perform(post("/shop/purchase")
                         .with(csrf())
-                        .param("itemName", "Clownfish")
+                        .param("itemName", "Blue Tang")
                         .param("itemType", "FISH")
-                        .param("colorHex", "#FF4500")
+                        .param("colorHex", "#2563EB")
                         .param("cost", "-15"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/shop"))
                 .andExpect(flash().attributeExists("errorMessage"));
 
         assertEquals(39, getDemoProfile(user).getPennies());
+        assertEquals(initialOwnedCount, unlockedItemRepository.findByUserId(user.getId()).size());
         assertFalse(unlockedItemRepository.findByUserId(user.getId()).stream()
-                .anyMatch(i -> "Clownfish".equals(i.getItemName())));
+                .anyMatch(i -> "Blue Tang".equals(i.getItemName())));
     }
 
     @Test
@@ -221,6 +228,10 @@ public class Checkpoint6Tests {
                 "Duplicate item purchase must not deduct pennies.");
         assertEquals(totalOwnedBefore, unlockedItemRepository.findByUserId(user.getId()).size(),
                 "Duplicate item purchase must not insert a second UnlockedItem row.");
+        long matchingCount = unlockedItemRepository.findByUserId(user.getId()).stream()
+                .filter(i -> "Treasure Chest".equalsIgnoreCase(i.getItemName()))
+                .count();
+        assertEquals(1, matchingCount);
     }
 
     @Test
@@ -293,6 +304,7 @@ public class Checkpoint6Tests {
     public void test8_DecorationCapThreeAndSlotNormalization() throws Exception {
         User user = getDemoUser();
 
+        // Clear existing decors (including any starter decor like "Sunken Treasure Chest")
         unlockedItemRepository.findByUserId(user.getId()).stream()
                 .filter(i -> "DECOR".equalsIgnoreCase(i.getItemType()))
                 .forEach(unlockedItemRepository::delete);

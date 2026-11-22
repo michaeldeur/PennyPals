@@ -74,7 +74,6 @@ public class UserService implements UserDetailsService {
         user.setEmail(dto.getEmail());
         user.setSecurityQuestion(dto.getSecurityQuestion());
 
-        // Normalize (trim + lowercase) and hash the security answer securely
         if (dto.getSecurityAnswer() != null && !dto.getSecurityAnswer().isBlank()) {
             String normalizedAnswer = dto.getSecurityAnswer().trim().toLowerCase();
             user.setSecurityAnswer(passwordEncoder.encode(normalizedAnswer));
@@ -87,29 +86,6 @@ public class UserService implements UserDetailsService {
         profile.setPennies(100);
         profile.setUpdatedAt(LocalDateTime.now());
         userProfileRepository.save(profile);
-
-        /// Seed default starter aquarium items: 1 fish and 1 decoration (auto-purchased and auto-equipped)
-        UnlockedItem defaultFish = new UnlockedItem();
-        defaultFish.setUser(savedUser);
-        defaultFish.setItemName("Ocellaris Clownfish");
-        defaultFish.setItemType("fish");
-        defaultFish.setColorHex("#ff4500");
-        defaultFish.setCurrencyType("Pennies");
-        defaultFish.setCost(0);
-        defaultFish.setIsPurchased(true);
-        defaultFish.setIsEquipped(true);
-        unlockedItemRepository.save(defaultFish);
-
-        UnlockedItem defaultDecor = new UnlockedItem();
-        defaultDecor.setUser(savedUser);
-        defaultDecor.setItemName("Sunken Treasure Chest");
-        defaultDecor.setItemType("decor");
-        defaultDecor.setColorHex("#8b4513");
-        defaultDecor.setCurrencyType("Pennies");
-        defaultDecor.setCost(0);
-        defaultDecor.setIsPurchased(true);
-        defaultDecor.setIsEquipped(true);
-        unlockedItemRepository.save(defaultDecor);
 
         return savedUser;
     }
