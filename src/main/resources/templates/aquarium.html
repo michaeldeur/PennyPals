@@ -403,7 +403,7 @@
                             }, canvas.width, canvas.height);
                         });
                     } else {
-                        fishes = [new DetailedFish(speciesConfigMap['clownfish'], canvas.width, canvas.height)];
+                        fishes = [];
                     }
 
                     const dbDecorList = equippedItems.filter(item =>
@@ -441,16 +441,16 @@
                         activeDecor = [];
                     }
                 } else {
-                    fishes = [new DetailedFish(speciesConfigMap['clownfish'], canvas.width, canvas.height)];
+                    fishes = [];
                     activeDecor = [];
                 }
             } else {
-                fishes = [new DetailedFish(speciesConfigMap['clownfish'], canvas.width, canvas.height)];
+                fishes = [];
                 activeDecor = [];
             }
         } catch (error) {
-            console.error("Failed to load equipped items from database, using fallback:", error);
-            fishes = [new DetailedFish(speciesConfigMap['clownfish'], canvas.width, canvas.height)];
+            console.error("Failed to load equipped items from database:", error);
+            fishes = [];
             activeDecor = [];
         }
     }
